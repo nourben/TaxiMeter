@@ -153,6 +153,7 @@ function tripTemplate(t) {
       </div>
       </div>
       <div class="opts">
+        <h3 class="opts-title">Tarification</h3>
         <div class="opt-row">
           <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Horaire">
             <input type="radio" name="period-${t.id}" id="p-${t.id}-jour" value="jour" data-f="period" /><label for="p-${t.id}-jour">${ICON_DAY} Jour</label>

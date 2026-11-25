@@ -1006,7 +1006,12 @@ main.main-wide {
 }
 
 .opts {
-  margin-top: 12px;
+  margin-top: 16px;
+}
+.opts-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0 0 8px;
 }
 .opt-row {
   display: flex;
@@ -1032,10 +1037,10 @@ main.main-wide {
   margin-top: 0;
 }
 .opt-metro {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 .opt-rate {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .opt-row + .info-panel {
