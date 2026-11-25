@@ -6,19 +6,19 @@ export function round2(value) {
 }
 
 /**
- * Calcule le prix d'une course.
+ * Calcule le prix d'un trajet.
  * @param {object} p
- * @param {number} p.distanceKm   distance du trajet
- * @param {number} p.ratePerKm    tarif kilométrique (€/km)
- * @param {'jour'|'nuit'} p.period
- * @param {boolean} p.metropole   supplément Métropole
- * @returns {{ total:number, lines:Array<{label:string, detail:string, amount:number}>, billableKm:number }}
+ * @param {number}  p.distanceKm  distance du trajet
+ * @param {number}  p.ratePerKm   tarif kilométrique (€/km)
+ * @param {boolean} p.night       majoration nuit / week-end / férié
+ * @param {boolean} p.hospital    majoration hospitalisation (aller ou retour à vide)
+ * @param {boolean} p.metropole   forfait grande ville (Métropole)
+ * @returns {{ total:number, lines:Array<{key:string, label:string, detail:string, amount:number}>, billableKm:number }}
  */
-export function computeFare({ distanceKm, ratePerKm, period, metropole }, cfg = TARIFS) {
+export function computeFare({ distanceKm, ratePerKm, night = false, hospital = false, metropole = false }, cfg = TARIFS) {
   const km = Number(distanceKm);
   if (!Number.isFinite(km) || km < 0) throw new RangeError('Distance invalide');
-  const p = cfg.periods[period];
-  if (!p) throw new RangeError(`Période inconnue : ${period}`);
+  const { night: N, hospital: H } = cfg.majorations;
 
   const billableKm = Math.max(0, round2(km - cfg.includedKm));
   const distanceCost = round2(billableKm * ratePerKm);
@@ -32,41 +32,37 @@ export function computeFare({ distanceKm, ratePerKm, period, metropole }, cfg = 
       amount: distanceCost,
     },
   ];
-
-  const long = p.longDistance && km >= p.longDistance.fromKm;
-  const multiplier = long ? p.longDistance.multiplier : p.multiplier;
-  const longNote = long ? ` (≥ ${p.longDistance.fromKm} km)` : '';
-
-  let subtotal;
-  if (p.appliesTo === 'distance') {
-    const majoration = round2(distanceCost * (multiplier - 1));
-    subtotal = cfg.pickup + distanceCost + majoration;
-    lines.push({
-      key: 'period',
-      label: `Tarif ${p.label.toLowerCase()}`,
-      detail: `× ${fmtNum(multiplier)} sur la distance${longNote}`,
-      amount: majoration,
-    });
-  } else {
-    const base = cfg.pickup + distanceCost;
-    const majoration = round2(base * (multiplier - 1));
-    subtotal = base + majoration;
-    lines.push({
-      key: 'period',
-      label: `Tarif ${p.label.toLowerCase()}`,
-      detail: `× ${fmtNum(multiplier)} sur le total${longNote}`,
-      amount: majoration,
-    });
-  }
-
+  let socle = cfg.pickup + distanceCost;
   if (metropole) {
-    lines.push({ key: 'metropole', label: 'Métropole', detail: 'supplément', amount: cfg.metropole.supplement });
-    subtotal += cfg.metropole.supplement;
+    lines.push({ key: 'metropole', label: 'Métropole', detail: 'forfait grande ville', amount: cfg.metropole.supplement });
+    socle += cfg.metropole.supplement;
   }
 
-  return { total: round2(subtotal), lines, billableKm };
+  let total = socle;
+  if (hospital) {
+    const long = km >= H.longFromKm;
+    const rate = long ? H.longRate : H.rate;
+    const amount = round2(distanceCost * rate);
+    lines.push({
+      key: 'hospital',
+      label: 'Hospitalisation',
+      detail: `+ ${pctNum(rate)} sur la distance${long ? ` (≥ ${H.longFromKm} km)` : ''}`,
+      amount,
+    });
+    total += amount;
+  }
+  if (night) {
+    const amount = round2(socle * N.rate);
+    lines.push({ key: 'night', label: 'Nuit / week-end / férié', detail: `+ ${pctNum(N.rate)} sur le tarif socle`, amount });
+    total += amount;
+  }
+
+  return { total: round2(total), lines, billableKm };
 }
 
+function pctNum(rate) {
+  return `${Math.round(rate * 100)} %`;
+}
 function fmtNum(n) {
   return String(n).replace('.', ',');
 }

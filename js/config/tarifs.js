@@ -16,25 +16,15 @@ export const TARIFS = {
   defaultRatePerKm: 1.07,
 
   /**
-   * Périodes tarifaires. C'est soit jour, soit nuit (jamais les deux).
-   * appliesTo :
-   *  - 'distance' → le coefficient s'applique uniquement au coût kilométrique
-   *  - 'total'    → le coefficient s'applique à (prise en charge + distance)
-   * Ces choix reproduisent exactement les exemples fournis :
-   *  jour 20 km : 13 + 19,20 × 1,25   = 37,00 €
-   *  jour ≥ 50 km : coefficient × 1,5 au lieu de × 1,25
-   *  nuit 20 km : (13 + 19,20) × 1,5  = 48,30 €
+   * Majorations de la convention-cadre taxis (JO du 8 août 2025), indépendantes et cumulables :
+   * - nuit / week-end / férié : + 50 % sur l'ensemble du tarif socle (prise en charge, grande ville, kilomètres)
+   *   Nuit = de 20 h à 8 h ; week-end = du samedi 12 h au dimanche minuit ; jours fériés.
+   * - hospitalisation avec aller ou retour à vide : + 25 % sur le tarif kilométrique, + 50 % à partir de 50 km.
+   * Exemples (20 km à 1,20 €) : hospitalisation 37,00 € · nuit 48,30 € · grande ville seule 47,20 €.
    */
-  periods: {
-    jour: {
-      label: 'Jour',
-      startHour: 8,
-      multiplier: 1.25,
-      appliesTo: 'distance',
-      /** Longue distance : à partir de fromKm (inclus), le coefficient de jour passe à multiplier */
-      longDistance: { fromKm: 50, multiplier: 1.5 },
-    },
-    nuit: { label: 'Nuit', startHour: 20, multiplier: 1.5, appliesTo: 'total' },
+  majorations: {
+    night: { label: 'Nuit / week-end / férié', rate: 0.5, startHour: 20, endHour: 8, saturdayFromHour: 12 },
+    hospital: { label: 'Hospitalisation (retour à vide)', rate: 0.25, longRate: 0.5, longFromKm: 50 },
   },
 
   /**

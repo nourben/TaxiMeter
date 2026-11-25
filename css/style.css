@@ -1423,3 +1423,15 @@ input:focus {
 .fare .breakdown {
   margin-bottom: 10px;
 }
+
+/* Majorations : boutons avec icône */
+.chip-icon {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.opt-hosp {
+  margin-top: 12px;
+}

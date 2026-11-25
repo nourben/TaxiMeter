@@ -31,17 +31,16 @@ npm test             # tests du calcul tarifaire et du choix d'itinéraire
 | `js/pages/` | Script de chaque page |
 | `tests/` | Tests `node --test` |
 
-## Calcul
+## Calcul (convention-cadre taxis, JO du 8 août 2025)
 
 ```
-km facturés = max(0, distance − 4)
-distance    = km facturés × tarif km (1,20 / 1,22 / 1,07)
-jour (8h–20h)  : 13 + distance × 1,25
-nuit (20h–8h)  : (13 + distance) × 1,5
-Métropole      : + 15 € (cumulable)
+socle          = 13 € (4 km inclus) + (distance − 4) × tarif km (1,07 / 1,20 / 1,22) [+ 15 € Métropole / grande ville]
+hospitalisation (aller ou retour à vide) : + 25 % du coût des km, + 50 % à partir de 50 km
+nuit / week-end / férié                  : + 50 % du socle
+transport partagé (2 / 3 / 4+ patients)  : − 23 % / − 35 % / − 37 % sur chaque trajet (− 5 % : patient seul ≥ 30 km)
 ```
 
-Exemples vérifiés par les tests : 20 km jour = 37,00 €, nuit = 48,30 €.
+Exemples vérifiés par les tests (20 km à 1,20 €) : hospitalisation 37,00 €, nuit 48,30 €, grande ville seule 47,20 €.
 
 ## Brancher l'API itinéraire (plus tard)
 

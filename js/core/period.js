@@ -1,12 +1,47 @@
 import { TARIFS } from '../config/tarifs.js';
 
+/** Dimanche de Pâques (calendrier grégorien). */
+function easterSunday(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+/** Jours fériés nationaux (métropole). */
+export function isPublicHoliday(date) {
+  const y = date.getFullYear();
+  const md = `${date.getMonth() + 1}-${date.getDate()}`;
+  if (['1-1', '5-1', '5-8', '7-14', '8-15', '11-1', '11-11', '12-25'].includes(md)) return true;
+  const easter = easterSunday(y);
+  return [1, 39, 50].some((offset) => {
+    const d = new Date(easter);
+    d.setDate(d.getDate() + offset); // lundi de Pâques, Ascension, lundi de Pentecôte
+    return d.getMonth() === date.getMonth() && d.getDate() === date.getDate();
+  });
+}
+
 /**
- * Renvoie la période tarifaire pour une date donnée.
- * Jour : de periods.jour.startHour (8h) inclus à periods.nuit.startHour (20h) exclu. Nuit sinon.
+ * Majoration « nuit / week-end / férié » applicable à une date ?
+ * @returns {{ active:boolean, reason:string }}
  */
-export function periodForDate(date, cfg = TARIFS) {
-  const minutes = date.getHours() * 60 + date.getMinutes();
-  const dayStart = cfg.periods.jour.startHour * 60;
-  const nightStart = cfg.periods.nuit.startHour * 60;
-  return minutes >= dayStart && minutes < nightStart ? 'jour' : 'nuit';
+export function nightRateFor(date, cfg = TARIFS) {
+  const N = cfg.majorations.night;
+  const h = date.getHours();
+  if (isPublicHoliday(date)) return { active: true, reason: 'jour férié' };
+  if (date.getDay() === 0) return { active: true, reason: 'dimanche' };
+  if (date.getDay() === 6 && h >= N.saturdayFromHour) return { active: true, reason: 'samedi après-midi' };
+  if (h >= N.startHour || h < N.endHour) return { active: true, reason: `nuit (${N.startHour} h – ${N.endHour} h)` };
+  return { active: false, reason: `jour de semaine (${N.endHour} h – ${N.startHour} h)` };
 }

@@ -1,65 +1,72 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeFare } from '../js/core/pricing.js';
-import { periodForDate } from '../js/core/period.js';
+import { computeFare, sharedRate, applyDiscount } from '../js/core/pricing.js';
+import { nightRateFor, isPublicHoliday } from '../js/core/period.js';
 
-const base = { distanceKm: 20, ratePerKm: 1.2 };
+const km20 = { distanceKm: 20, ratePerKm: 1.2 };
+const total = (p) => computeFare(p).total;
 
-test('exemple jour 20 km = 37,00 €', () => {
-  assert.equal(computeFare({ ...base, period: 'jour', metropole: false }).total, 37);
+test('exemples fournis : hospitalisation 37,00 €, nuit 48,30 €, grande ville seule 47,20 €', () => {
+  assert.equal(total({ ...km20, hospital: true }), 37);
+  assert.equal(total({ ...km20, night: true }), 48.3);
+  assert.equal(total({ ...km20, metropole: true }), 47.2);
 });
 
-test('exemple nuit 20 km = 48,30 €', () => {
-  assert.equal(computeFare({ ...base, period: 'nuit', metropole: false }).total, 48.3);
+test('sans majoration : prise en charge + distance', () => {
+  assert.equal(total(km20), 32.2);
 });
 
-test('métropole ajoute 15 € (jour et nuit)', () => {
-  assert.equal(computeFare({ ...base, period: 'jour', metropole: true }).total, 52);
-  assert.equal(computeFare({ ...base, period: 'nuit', metropole: true }).total, 63.3);
+test('la nuit majore aussi le forfait grande ville', () => {
+  assert.equal(total({ ...km20, night: true, metropole: true }), 70.8); // (13 + 15 + 19,20) × 1,5
 });
 
-test('distance ≤ 4 km : seule la prise en charge', () => {
-  assert.equal(computeFare({ distanceKm: 3, ratePerKm: 1.2, period: 'jour', metropole: false }).total, 13);
-  assert.equal(computeFare({ distanceKm: 4, ratePerKm: 1.2, period: 'nuit', metropole: false }).total, 19.5);
+test('hospitalisation : + 25 % sur les km, + 50 % à partir de 50 km', () => {
+  assert.equal(total({ distanceKm: 49.9, ratePerKm: 1.2, hospital: true }), 81.85);
+  assert.equal(total({ distanceKm: 50, ratePerKm: 1.2, hospital: true }), 95.8);
+});
+
+test('majorations cumulables : nuit + hospitalisation', () => {
+  assert.equal(total({ ...km20, night: true, hospital: true }), 53.1); // 32,20 + 4,80 + 16,10
+});
+
+test('distance ≤ 4 km : seule la prise en charge (majorée la nuit)', () => {
+  assert.equal(total({ distanceKm: 3, ratePerKm: 1.07 }), 13);
+  assert.equal(total({ distanceKm: 4, ratePerKm: 1.07, night: true }), 19.5);
 });
 
 test('autres tarifs kilométriques', () => {
-  // 13 + 16 × 1,07 × 1,25 = 13 + 17,12 + 4,28 = 34,40
-  assert.equal(computeFare({ distanceKm: 20, ratePerKm: 1.07, period: 'jour', metropole: false }).total, 34.4);
-  // 13 + 16 × 1,22 = 32,52 → × 1,25 sur distance : 13 + 19,52 + 4,88 = 37,40
-  assert.equal(computeFare({ distanceKm: 20, ratePerKm: 1.22, period: 'jour', metropole: false }).total, 37.4);
+  assert.equal(total({ distanceKm: 20, ratePerKm: 1.07, hospital: true }), 34.4);
+  assert.equal(total({ distanceKm: 20, ratePerKm: 1.22, hospital: true }), 37.4);
 });
 
 test('la somme des lignes = total', () => {
-  const r = computeFare({ distanceKm: 37.4, ratePerKm: 1.22, period: 'nuit', metropole: true });
-  const sum = Math.round(r.lines.reduce((s, l) => s + l.amount, 0) * 100) / 100;
-  assert.equal(sum, r.total);
+  const r = computeFare({ distanceKm: 57.3, ratePerKm: 1.22, night: true, hospital: true, metropole: true });
+  assert.equal(Math.round(r.lines.reduce((s, l) => s + l.amount, 0) * 100) / 100, r.total);
 });
 
 test('distance invalide refusée', () => {
-  assert.throws(() => computeFare({ distanceKm: -1, ratePerKm: 1.2, period: 'jour' }));
-  assert.throws(() => computeFare({ distanceKm: NaN, ratePerKm: 1.2, period: 'jour' }));
+  assert.throws(() => computeFare({ distanceKm: -1, ratePerKm: 1.2 }));
+  assert.throws(() => computeFare({ distanceKm: NaN, ratePerKm: 1.2 }));
 });
 
-test('période : 8h00 jour, 19h59 jour, 20h00 nuit, 7h59 nuit', () => {
-  const at = (h, m) => new Date(2026, 0, 1, h, m);
-  assert.equal(periodForDate(at(8, 0)), 'jour');
-  assert.equal(periodForDate(at(19, 59)), 'jour');
-  assert.equal(periodForDate(at(20, 0)), 'nuit');
-  assert.equal(periodForDate(at(7, 59)), 'nuit');
-  assert.equal(periodForDate(at(0, 30)), 'nuit');
+test('nuit / week-end / férié selon la date', () => {
+  const at = (y, m, d, h, min = 0) => new Date(y, m - 1, d, h, min);
+  assert.equal(nightRateFor(at(2026, 11, 25, 19, 59)).active, false); // mercredi
+  assert.equal(nightRateFor(at(2026, 11, 25, 20, 0)).active, true);
+  assert.equal(nightRateFor(at(2026, 11, 26, 7, 59)).active, true);
+  assert.equal(nightRateFor(at(2026, 11, 26, 8, 0)).active, false);
+  assert.equal(nightRateFor(at(2026, 11, 28, 11, 59)).active, false); // samedi matin
+  assert.equal(nightRateFor(at(2026, 11, 28, 12, 0)).active, true); // samedi 12 h
+  assert.equal(nightRateFor(at(2026, 11, 29, 10, 0)).active, true); // dimanche
+  assert.equal(nightRateFor(at(2026, 11, 11, 10, 0)).active, true); // 11 novembre
 });
 
-test('jour à partir de 50 km : coefficient × 1,5', () => {
-  // 13 + 46 × 1,2 × 1,5 = 13 + 55,20 + 27,60 = 95,80
-  assert.equal(computeFare({ distanceKm: 50, ratePerKm: 1.2, period: 'jour', metropole: false }).total, 95.8);
-  // 49,9 km reste à × 1,25 : 13 + 45,9 × 1,2 = 55,08 → + 13,77 = 81,85
-  assert.equal(computeFare({ distanceKm: 49.9, ratePerKm: 1.2, period: 'jour', metropole: false }).total, 81.85);
-  // la nuit n'est pas concernée : (13 + 55,20) × 1,5 = 102,30
-  assert.equal(computeFare({ distanceKm: 50, ratePerKm: 1.2, period: 'nuit', metropole: false }).total, 102.3);
+test('jours fériés mobiles', () => {
+  assert.equal(isPublicHoliday(new Date(2027, 2, 29)), true); // lundi de Pâques 2027
+  assert.equal(isPublicHoliday(new Date(2027, 4, 6)), true); // Ascension 2027
+  assert.equal(isPublicHoliday(new Date(2027, 4, 17)), true); // lundi de Pentecôte 2027
+  assert.equal(isPublicHoliday(new Date(2027, 2, 30)), false);
 });
-
-import { sharedRate, applyDiscount } from '../js/core/pricing.js';
 
 test('transport partagé : 23 % / 35 % / 37 % (4 et plus)', () => {
   assert.equal(sharedRate(1), 0);
@@ -69,10 +76,10 @@ test('transport partagé : 23 % / 35 % / 37 % (4 et plus)', () => {
   assert.equal(sharedRate(7), 0.37);
 });
 
-test('abattement appliqué sur le total du trajet (Métropole comprise)', () => {
-  const base = computeFare({ distanceKm: 20, ratePerKm: 1.2, period: 'jour', metropole: true }); // 52,00
+test('abattement appliqué sur le total du trajet (majorations comprises)', () => {
+  const base = computeFare({ ...km20, hospital: true, metropole: true }); // 52,00
   const r = applyDiscount(base, 0.23, 'Transport partagé', '2 patients');
-  assert.equal(r.total, 40.04); // 52 − 11,96
+  assert.equal(r.total, 40.04);
   assert.equal(Math.round(r.lines.reduce((s, l) => s + l.amount, 0) * 100) / 100, r.total);
   assert.equal(applyDiscount(base, 0.05, 'x', 'y').total, 49.4);
 });
