@@ -6,7 +6,6 @@
 |---|---|---|---|
 | `estimates` | table | le site (clé publique) | une ligne par événement, colonne `kind` : `price` (estimation de prix) ou `distance` (calcul de distance) ; le site peut **ajouter** mais pas **lire** |
 | `estimates_per_period(granularity, periods, kind)` | fonction SQL (RPC) | page Statistiques | nombre d'événements d'un type par jour / semaine / mois / année, périodes vides comprises |
-| `api_usage` + `increment_api_usage(provider)` | table + fonction SQL | fonction `route` uniquement | compteur mensuel d'appels Google, pour bloquer avant la limite gratuite |
 | `route` | Edge Function ([`supabase/functions/route/index.ts`](../supabase/functions/route/index.ts)) | bouton « Calculer la distance » | appelle Google Routes avec la clé secrète, applique la règle de choix d'itinéraire, renvoie distance et durée |
 
 Le schéma SQL est dans [`supabase/migrations/`](../supabase/migrations/), à exécuter dans l'ordre : `0001_init.sql`, puis `0002_distance_calculations.sql` (testés sur PostgreSQL 16).
@@ -32,7 +31,6 @@ En-têtes : `apikey: <clé publique>` (+ `Authorization: Bearer <clé publique>`
 7. **Claude branche le site** — fait : configuration Supabase, enregistrement des estimations, vraies données dans les Statistiques.
 8. **Déployer la fonction `route`** — Edge Functions → *Deploy a new function* → *Via Editor* → nom **`route`** → remplacer le code par tout `supabase/functions/route/index.ts` → *Deploy*.
 9. **Désactiver la vérification JWT** de la fonction — Edge Functions → `route` → *Details* (ou *Settings*) → décocher *Verify JWT / Enforce JWT verification* → enregistrer. Indispensable : la clé « publishable » du site n'est pas un JWT.
-10. *(Facultatif)* secret `GOOGLE_MONTHLY_LIMIT` pour changer la limite mensuelle de calculs (4 500 par défaut).
 
 > Offre gratuite : un projet inactif pendant une semaine est mis en pause ; il se relance depuis le tableau de bord.
 
@@ -41,6 +39,6 @@ En-têtes : `apikey: <clé publique>` (+ `Authorization: Bearer <clé publique>`
 1. console.cloud.google.com → créer un projet (ex. `taximeter`).
 2. Facturation → associer un compte de facturation (carte bancaire, obligatoire même pour rester dans le gratuit).
 3. APIs et services → Bibliothèque → chercher **Routes API** → Activer.
-4. APIs et services → Identifiants → Créer des identifiants → Clé API → Modifier la clé : *Restrictions d'API* = Routes API uniquement.
+4. APIs et services → Identifiants → Créer des identifiants → Clé API → Modifier la clé : *Restrictions d'API* = Routes API uniquement ; *Restrictions d'application* = **Aucune** (la clé est utilisée par le serveur Supabase : une restriction par site web ou par IP bloquerait les calculs).
 5. **Garde-fou** : APIs et services → Routes API → Quotas → baisser « requêtes par jour » (ex. 150/jour ≈ 4 500/mois, sous les 5 000 gratuits du niveau Pro). Au-delà, Google refuse les appels au lieu de les facturer.
 6. Facturation → Budgets et alertes → budget de 5 € avec alertes à 50 / 90 / 100 % (une alerte prévient mais ne bloque pas).

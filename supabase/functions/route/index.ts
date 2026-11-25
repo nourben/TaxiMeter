@@ -3,12 +3,10 @@
 // Appel : POST {SUPABASE_URL}/functions/v1/route  (en-tête apikey: <clé publishable>)
 // Corps : { "origin": { "label": "...", "lat"?: 48.8, "lon"?: 2.3 }, "destination": { ... } }
 // Réponse 200 : { distanceKm, durationMin, reason, shortest, routes: [...] }
-// Erreurs : 400 requête invalide · 422 adresse non trouvée · 429 quota du mois atteint · 502 Google indisponible
+// Erreurs : 400 requête invalide · 422 adresse non trouvée · 429 quota Google atteint · 502 Google indisponible
 //
-// Secrets (Supabase → Edge Functions → Secrets) :
-//   GOOGLE_MAPS_API_KEY   (obligatoire)
-//   GOOGLE_MONTHLY_LIMIT  (facultatif, 4500 par défaut : sous les 5 000 appels gratuits du niveau Pro)
-// SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis automatiquement par Supabase.
+// Secret (Supabase → Edge Functions → Secrets) : GOOGLE_MAPS_API_KEY
+// Les dépenses sont plafonnées côté Google (quotas de la console + carte à montant limité).
 
 const ALLOWED_ORIGINS = ['https://nourben.github.io', 'http://localhost:8765', 'http://localhost:3000'];
 
@@ -58,24 +56,6 @@ export function selectRoute(routes: Route[]) {
   return { route: fastest, shortest, reason: 'faster-alternative' };
 }
 
-/** Incrémente le compteur mensuel ; renvoie le nombre d'appels du mois (ou null si la base ne répond pas). */
-async function incrementUsage(): Promise<number | null> {
-  const url = Deno.env.get('SUPABASE_URL');
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!url || !key) return null;
-  try {
-    const res = await fetch(`${url}/rest/v1/rpc/increment_api_usage`, {
-      method: 'POST',
-      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ p_provider: 'google' }),
-    });
-    if (!res.ok) return null;
-    return Number(await res.json());
-  } catch {
-    return null;
-  }
-}
-
 async function handle(req: Request): Promise<Response> {
   const origin = req.headers.get('Origin');
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
@@ -93,12 +73,6 @@ async function handle(req: Request): Promise<Response> {
 
   const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
   if (!apiKey) return json({ error: 'not_configured', message: 'Clé Google absente.' }, 500, origin);
-
-  // Garde-fou : on bloque avant la limite gratuite (le compteur inclut cet appel)
-  const limit = Number(Deno.env.get('GOOGLE_MONTHLY_LIMIT') ?? 4500);
-  const calls = await incrementUsage();
-  if (calls == null) return json({ error: 'usage_unavailable', message: 'Compteur indisponible, calcul bloqué par sécurité.' }, 503, origin);
-  if (calls > limit) return json({ error: 'quota', message: 'Quota mensuel de calculs atteint.' }, 429, origin);
 
   let res: Response;
   try {
@@ -127,6 +101,9 @@ async function handle(req: Request): Promise<Response> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = String(data?.error?.message ?? '');
+    if (res.status === 429) {
+      return json({ error: 'quota', message: 'Quota Google atteint.', detail: msg }, 429, origin);
+    }
     if (res.status === 400 || res.status === 404) {
       return json({ error: 'not_found', message: 'Adresse de départ ou de destination non reconnue.', detail: msg }, 422, origin);
     }
