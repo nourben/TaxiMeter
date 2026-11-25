@@ -56,7 +56,7 @@ export const TASKS = [
   { status: 'done', area: 'API itinéraire', title: 'Bouton « Calculer la distance » actif : remplit la distance (modifiable, ↺), indique si un itinéraire plus rapide est retenu' },
   { status: 'done', area: 'API itinéraire', title: 'Message si départ / destination non reconnu, quota atteint ou erreur, avec repli sur Google Maps' },
   { status: 'todo', area: 'API itinéraire', title: 'Afficher le temps de trajet estimé renvoyé par l’API', note: 'Retiré de l’interface en attendant ; la valeur est déjà prévue dans setRouteResult.' },
-  { status: 'todo', area: 'API itinéraire', title: 'Plafonner Routes API dans la console Google : 150 calculs / jour, 30 / minute, ComputeRouteMatrix à 0' },
+  { status: 'later', area: 'API itinéraire', title: 'URGENT à la fin de l’essai Google (≈ fin février 2027) : plafonner Routes API (console Google → APIs et services → Routes API → Quotas)', note: 'Bloqué pendant l’essai gratuit de 3 mois. « Directions - ComputeRoutes per request quota per day » : Illimité → 150 (150 × 31 jours ≈ 4 650 calculs, sous les 5 000 gratuits par mois). « Directions - ComputeRoutes per request quota per minute » : 3 000 → 30 (évite qu’un abus ou un bug épuise le quota du jour en quelques secondes). « DistanceMatrix - ComputeRouteMatrix per-element quota per day » : Illimité → 0 (le site ne s’en sert pas). Rappel par e-mail programmé du 20 au 26 février 2027.' },
   { status: 'check', area: 'API itinéraire', title: 'Déployer la fonction « route » dans Supabase et désactiver « Verify JWT » (étapes 8 et 9 de docs/SUPABASE.md)', note: 'Redéployer après chaque modification de supabase/functions/route/index.ts. Puis tester « Calculer la distance » sur le site en ligne.' },
 
   // ---------- Plus tard ----------
