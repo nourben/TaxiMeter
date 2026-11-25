@@ -837,12 +837,6 @@ main.main-wide {
   font-variant-numeric: tabular-nums;
 }
 
-.route-wrap {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 168px;
-  gap: 8px;
-  align-items: stretch;
-}
 .route {
   display: flex;
   flex-direction: column;
@@ -883,9 +877,11 @@ main.main-wide {
 }
 
 .route-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  width: min(100%, 460px);
+  margin: 8px auto 0;
 }
 .calc-btn,
 .maps-btn {
@@ -907,7 +903,6 @@ main.main-wide {
   line-height: 1.25;
   text-align: left;
   text-decoration: none;
-  white-space: nowrap;
   cursor: pointer;
 }
 .calc-btn svg,
@@ -1011,11 +1006,26 @@ main.main-wide {
 }
 .opt-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px 8px;
 }
 .opt-wide {
   width: min(100% - 32px, 375px);
+}
+/* Texte d'info à droite du bouton / champ (passe dessous si l'écran est trop étroit) */
+.opt-side {
+  flex: 1 1 150px;
+  margin: 0;
+}
+.opt-km .km-field {
+  margin-top: 0;
+}
+.opt-km {
+  margin-top: 12px;
+}
+.opt-km .trip-meta {
+  margin-top: 0;
 }
 .opt-metro {
   margin-top: 18px;
@@ -1023,9 +1033,7 @@ main.main-wide {
 .opt-rate {
   margin-top: 10px;
 }
-.opts .trip-hint {
-  margin-top: 4px;
-}
+
 .opt-row + .info-panel {
   margin: 8px 0 0;
 }
@@ -1164,4 +1172,48 @@ main.main-wide {
 .trip-actions {
   gap: 8px;
   margin-top: 4px;
+}
+
+.maps-label {
+  display: flex;
+  flex-direction: column;
+}
+.maps-label > span {
+  white-space: nowrap;
+}
+.narrow-only {
+  display: none;
+}
+@media (max-width: 600px) {
+  .wide-only {
+    display: none;
+  }
+  .narrow-only {
+    display: inline;
+  }
+  /* Infos à droite même sur mobile : contrôles un peu plus étroits */
+  .opt-row {
+    flex-wrap: nowrap;
+  }
+  .opt-row .opt-wide {
+    width: 58%;
+    flex: none;
+  }
+  .opt-side {
+    flex: 1 1 0;
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+  .opt-km .trip-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  .opt-km .same-km {
+    margin-left: 0;
+  }
+  .chip {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
 }
