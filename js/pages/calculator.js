@@ -1,93 +1,334 @@
-import { TARIFS } from '../config/tarifs.js';
-import { computeFare, formatEuro } from '../core/pricing.js';
+import { TARIFS, MAX_TRIPS } from '../config/tarifs.js';
+import { computeFare, formatEuro, round2 } from '../core/pricing.js';
 import { periodForDate } from '../core/period.js';
 import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode } from '../services/geocoding.js';
-import { courses } from '../services/storage.js';
 import { initInfoButtons } from '../ui/info.js';
 
 const $ = (id) => document.getElementById(id);
 const num = (s) => String(s).replace('.', ',');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const el = {
-  form: $('fare-form'),
-  origin: $('origin'),
-  destination: $('destination'),
-  mapsLink: $('maps-link'),
-  distance: $('distance'),
-  distanceReset: $('distance-reset'),
-  distanceSource: $('distance-source'),
-  duration: $('duration'),
-  departure: $('departure'),
-  periodJour: $('period-jour'),
-  periodNuit: $('period-nuit'),
-  periodBadge: $('period-badge'),
-  periodHint: $('period-hint'),
-  periodAuto: $('period-auto'),
-  metropole: $('metropole'),
-  metropoleHint: $('metropole-hint'),
-  metropoleAuto: $('metropole-auto'),
-  rateGroup: $('rate-group'),
-  price1: $('price-1'),
-  result1: $('result-1-body'),
-  result1Suffix: $('result-1-suffix'),
-  addSecond: $('add-second'),
-  removeSecond: $('remove-second'),
-  second: $('second-course'),
-  secondOriginLabel: $('second-origin-label'),
-  destination2: $('destination-2'),
-  mapsLink2: $('maps-link-2'),
-  distance2: $('distance-2'),
-  distance2Reset: $('distance-2-reset'),
-  duration2: $('duration-2'),
-  metropole2: $('metropole-2'),
-  metropole2Hint: $('metropole-2-hint'),
-  metropole2Auto: $('metropole-2-auto'),
-  price2: $('price-2'),
-  result2: $('result-2-body'),
-  combined: $('combined'),
+  trips: $('trips'),
+  title: $('h-trips'),
+  add: $('add-trip'),
+  limit: $('trip-limit'),
+  priceTitle: $('h-price'),
   priceTotal: $('price-total'),
-  save: $('save-course'),
-  resetForm: $('reset-form'),
+  priceNote: $('price-note'),
+  priceList: $('price-list'),
+  reset: $('reset-form'),
   toast: $('toast'),
 };
 
-const state = {
-  periodAuto: true,
-  secondActive: false,
-  /** Lieux géocodés (null tant que non trouvés) */
-  places: { origin: null, destination: null, destination2: null },
-  /** Métropole : auto ou forcé à la main, par course */
-  metro: {
-    1: { auto: true, detected: { inZone: false, reason: null } },
-    2: { auto: true, detected: { inZone: false, reason: null } },
-  },
-  /** Valeurs renvoyées par l'API itinéraire (null tant qu'elle n'est pas branchée) */
-  apiDistance: { 1: null, 2: null },
-  apiDuration: { 1: null, 2: null },
-};
+/* ---------- État ---------- */
 
-/* ---------- Utilitaires ---------- */
-
-function toLocalInputValue(date) {
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+let seq = 0;
+/**
+ * Un trajet. period / metropole valent null en mode automatique.
+ * apiDistance / apiDuration seront remplis par l'API itinéraire.
+ */
+function newTrip() {
+  return {
+    id: ++seq,
+    origin: '',
+    destination: '',
+    distance: '',
+    apiDistance: null,
+    apiDuration: null,
+    period: null,
+    metropole: null,
+    rate: TARIFS.defaultRatePerKm,
+    geo: { origin: null, destination: null },
+  };
 }
 
-function readNumber(input) {
-  const raw = String(input.value).trim().replace(',', '.');
+const state = { trips: [newTrip()], openFares: new Set() };
+
+/* ---------- Calculs dérivés ---------- */
+
+function readKm(value) {
+  const raw = String(value).trim().replace(',', '.');
   if (raw === '') return null;
   const v = Number(raw);
   return Number.isFinite(v) && v >= 0 ? v : null;
 }
 
-function debounce(fn, ms) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
-  };
+function autoPeriod() {
+  return periodForDate(new Date());
+}
+
+function effectivePeriod(t) {
+  return t.period ?? autoPeriod();
+}
+
+function placeFor(t, key) {
+  const text = t[key].trim();
+  if (!text) return null;
+  const g = t.geo[key];
+  return g && g.query === text ? { text, ...g } : { text };
+}
+
+function detectMetro(t) {
+  const o = checkMetropole(placeFor(t, 'origin'));
+  if (o.inZone) return { inZone: true, reason: `départ, ${o.reason}` };
+  const d = checkMetropole(placeFor(t, 'destination'));
+  if (d.inZone) return { inZone: true, reason: `destination, ${d.reason}` };
+  return { inZone: false, reason: null };
+}
+
+function effectiveMetro(t) {
+  return t.metropole ?? detectMetro(t).inZone;
+}
+
+function fareOf(t) {
+  const distanceKm = readKm(t.distance);
+  if (distanceKm == null) return null;
+  const params = { distanceKm, ratePerKm: t.rate, period: effectivePeriod(t), metropole: effectiveMetro(t) };
+  return { params, fare: computeFare(params) };
+}
+
+/* ---------- Rendu d'un trajet (créé une fois, puis mis à jour) ---------- */
+
+const PIN =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+
+function tripTemplate(t) {
+  const rates = TARIFS.ratesPerKm
+    .map((r) => {
+      const id = `rate-${t.id}-${String(r).replace('.', '')}`;
+      const nd = r === TARIFS.defaultRatePerKm ? '' : ' class="nondefault"';
+      return `<input type="radio" name="rate-${t.id}" id="${id}" value="${r}" data-f="rate"${nd} /><label for="${id}">${num(r.toFixed(2))}</label>`;
+    })
+    .join('');
+  return `
+    <div class="trip-head">
+      <span class="trip-title" data-o="title"></span>
+      <span class="trip-price" data-o="price"></span>
+      <button type="button" class="link-btn" data-a="remove">Retirer</button>
+    </div>
+    <div class="route">
+      <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ (adresse ou ville)" aria-label="Départ" enterkeyhint="next" /></div>
+      <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination" enterkeyhint="next" /></div>
+    </div>
+    <div class="trip-row">
+      <div class="km-field">
+        <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
+        <span class="suffix">km</span>
+      </div>
+      <button type="button" class="btn reset-btn hidden" data-a="reset-km" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
+      <a class="maps-link" data-o="maps" target="_blank" rel="noopener">${PIN}Google Maps</a>
+    </div>
+    <div class="trip-meta">
+      <span>Temps de trajet estimé : <strong data-o="duration">—</strong></span>
+      <button type="button" class="link-btn" data-a="same-km">Même km que le trajet 1</button>
+    </div>
+    <div class="opts">
+      <div class="segmented seg-sm" role="radiogroup" aria-label="Horaire">
+        <input type="radio" name="period-${t.id}" id="p-${t.id}-jour" value="jour" data-f="period" /><label for="p-${t.id}-jour">☀︎ Jour</label>
+        <input type="radio" name="period-${t.id}" id="p-${t.id}-nuit" value="nuit" data-f="period" /><label for="p-${t.id}-nuit">☾ Nuit</label>
+      </div>
+      <button type="button" class="chip" data-a="metro" aria-pressed="false">Métropole</button>
+      <div class="segmented seg-sm" role="radiogroup" aria-label="Tarif kilométrique en euros">${rates}</div>
+      <button class="info-btn" data-info="options" aria-label="Aide sur les options du trajet">i</button>
+    </div>
+    <p class="trip-hint" data-o="hint"></p>`;
+}
+
+function tripNode(t) {
+  return el.trips.querySelector(`.trip[data-id="${t.id}"]`);
+}
+
+function mountTrip(t) {
+  const node = document.createElement('div');
+  node.className = 'trip';
+  node.dataset.id = t.id;
+  node.innerHTML = tripTemplate(t);
+  for (const f of ['origin', 'destination', 'distance']) node.querySelector(`[data-f="${f}"]`).value = t[f];
+  el.trips.appendChild(node);
+  initInfoButtons(node);
+  return node;
+}
+
+function updateTrip(t, index, count) {
+  const node = tripNode(t);
+  const o = (k) => node.querySelector(`[data-o="${k}"]`);
+  const multi = count > 1;
+
+  node.querySelector('.trip-head').classList.toggle('hidden', !multi);
+  o('title').textContent = `Trajet ${index + 1}`;
+  node.querySelector('[data-a="remove"]').classList.toggle('hidden', index === 0);
+  const r = fareOf(t);
+  o('price').textContent = r ? formatEuro(r.fare.total) : '';
+
+  // Distance : bouton ↺ seulement si l'API a donné une valeur et qu'elle a été modifiée
+  const km = readKm(t.distance);
+  node.querySelector('[data-a="reset-km"]').classList.toggle('hidden', t.apiDistance == null || km === t.apiDistance);
+
+  const sameKm = node.querySelector('[data-a="same-km"]');
+  const firstKm = readKm(state.trips[0].distance);
+  sameKm.classList.toggle('hidden', index === 0 || firstKm == null || firstKm === km);
+
+  o('duration').textContent = t.apiDuration != null ? formatDuration(t.apiDuration) : '—';
+
+  const maps = o('maps');
+  if (t.origin.trim() && t.destination.trim()) {
+    maps.href = googleMapsDirectionsUrl(t.origin, t.destination);
+    maps.removeAttribute('aria-disabled');
+  } else {
+    maps.removeAttribute('href');
+    maps.setAttribute('aria-disabled', 'true');
+  }
+
+  // Options
+  const period = effectivePeriod(t);
+  node.querySelector(`#p-${t.id}-${period}`).checked = true;
+  const metro = effectiveMetro(t);
+  const chip = node.querySelector('[data-a="metro"]');
+  chip.setAttribute('aria-pressed', String(metro));
+  chip.textContent = metro ? '✓ Métropole' : 'Métropole';
+  for (const radio of node.querySelectorAll('[data-f="rate"]')) radio.checked = Number(radio.value) === t.rate;
+
+  // Ligne d'état : auto ou manuel
+  const p = TARIFS.periods;
+  const parts = [];
+  parts.push(
+    t.period == null
+      ? `Horaire auto : ${period === 'jour' ? `jour (${p.jour.startHour} h–${p.nuit.startHour} h)` : `nuit (${p.nuit.startHour} h–${p.jour.startHour} h)`}`
+      : `Horaire choisi : ${period} · <button type="button" class="link-btn" data-a="period-auto">auto</button>`,
+  );
+  if (t.metropole == null) {
+    const det = detectMetro(t);
+    if (det.inZone) parts.push(`Métropole détectée (${esc(det.reason)})`);
+  } else {
+    parts.push(`Métropole ${t.metropole ? 'ajoutée' : 'retirée'} à la main · <button type="button" class="link-btn" data-a="metro-auto">auto</button>`);
+  }
+  if (t.rate !== TARIFS.defaultRatePerKm) parts.push(`<span class="warn-text">Tarif ${num(t.rate.toFixed(2))} €/km</span>`);
+  o('hint').innerHTML = parts.join(' · ');
+}
+
+function formatDuration(min) {
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`;
+}
+
+/* ---------- Module prix ---------- */
+
+function breakdownTable(fare) {
+  const rows = fare.lines
+    .map(
+      (l) =>
+        `<tr><td>${l.label}<span class="detail">${l.detail}</span></td><td>${l.key === 'pickup' || l.key === 'distance' ? '' : '+ '}${formatEuro(l.amount)}</td></tr>`,
+    )
+    .join('');
+  return `<table class="breakdown"><tbody>${rows}</tbody></table>`;
+}
+
+function summaryLabel(params) {
+  const bits = [`${num(params.distanceKm)} km`, TARIFS.periods[params.period].label];
+  if (params.metropole) bits.push('Métropole');
+  if (params.ratePerKm !== TARIFS.defaultRatePerKm) bits.push(`${num(params.ratePerKm.toFixed(2))} €/km`);
+  return bits.join(' · ');
+}
+
+function renderPrice() {
+  const results = state.trips.map((t) => ({ t, r: fareOf(t) }));
+  const valid = results.filter((x) => x.r);
+  const multi = state.trips.length > 1;
+
+  el.priceTitle.textContent = multi ? 'Prix total' : 'Prix estimé';
+  const total = round2(valid.reduce((s, x) => s + x.r.fare.total, 0));
+  el.priceTotal.textContent = valid.length ? formatEuro(total) : '—';
+
+  const missing = results.length - valid.length;
+  el.priceNote.classList.toggle('hidden', !(multi && valid.length && missing));
+  el.priceNote.textContent = missing ? `${missing} trajet${missing > 1 ? 's' : ''} sans distance, non compté${missing > 1 ? 's' : ''}.` : '';
+
+  if (!valid.length) {
+    el.priceList.innerHTML = '<p class="empty-state">Indiquez la distance pour obtenir le prix.</p>';
+    return;
+  }
+
+  if (!multi) {
+    const { r } = valid[0];
+    el.priceList.innerHTML = `<p class="fare-summary">${summaryLabel(r.params)}</p>${breakdownTable(r.fare)}`;
+    return;
+  }
+
+  el.priceList.innerHTML = results
+    .map(({ t, r }, i) => {
+      if (!r) return `<div class="fare-row muted"><span>Trajet ${i + 1}</span><span>—</span></div>`;
+      const open = state.openFares.has(t.id) ? ' open' : '';
+      return `<details class="fare" data-id="${t.id}"${open}>
+        <summary><span><strong>Trajet ${i + 1}</strong> <span class="muted">${summaryLabel(r.params)}</span></span><span class="fare-amount">${formatEuro(r.fare.total)}</span></summary>
+        ${breakdownTable(r.fare)}
+      </details>`;
+    })
+    .join('');
+}
+
+/* ---------- Mise à jour globale ---------- */
+
+function update() {
+  const count = state.trips.length;
+  state.trips.forEach((t, i) => updateTrip(t, i, count));
+  el.title.textContent = count > 1 ? 'Trajets' : 'Trajet';
+  const full = count >= MAX_TRIPS;
+  el.add.classList.toggle('hidden', full);
+  el.limit.classList.toggle('hidden', !full);
+  el.limit.textContent = `${MAX_TRIPS} trajets maximum`;
+  renderPrice();
+}
+
+/* ---------- Actions ---------- */
+
+function tripFromEvent(e) {
+  const node = e.target.closest('.trip');
+  return node ? state.trips.find((t) => t.id === Number(node.dataset.id)) : null;
+}
+
+const geoTimers = new Map();
+function scheduleGeocode(t, key) {
+  const k = `${t.id}-${key}`;
+  clearTimeout(geoTimers.get(k));
+  geoTimers.set(
+    k,
+    setTimeout(async () => {
+      const query = t[key].trim();
+      if (query.length < 3) return;
+      const result = await geocode(query);
+      if (t[key].trim() !== query || !state.trips.includes(t)) return;
+      t.geo[key] = result ? { ...result, query } : null;
+      update();
+    }, 600),
+  );
+}
+
+function addTrip() {
+  if (state.trips.length >= MAX_TRIPS) return;
+  const t = newTrip();
+  state.trips.push(t);
+  mountTrip(t);
+  update();
+  tripNode(t).querySelector('[data-f="origin"]').focus();
+}
+
+function removeTrip(t) {
+  state.trips = state.trips.filter((x) => x !== t);
+  state.openFares.delete(t.id);
+  tripNode(t)?.remove();
+  update();
+}
+
+function resetAll() {
+  el.trips.innerHTML = '';
+  state.trips = [newTrip()];
+  state.openFares.clear();
+  mountTrip(state.trips[0]);
+  update();
 }
 
 let toastTimer;
@@ -98,388 +339,103 @@ function toast(message) {
   toastTimer = setTimeout(() => el.toast.classList.remove('show'), 2200);
 }
 
-function selectedRate() {
-  const checked = el.rateGroup.querySelector('input:checked');
-  return checked ? Number(checked.value) : TARIFS.defaultRatePerKm;
-}
+function bind() {
+  el.trips.addEventListener('input', (e) => {
+    const t = tripFromEvent(e);
+    const f = e.target.dataset.f;
+    if (!t || !['origin', 'destination', 'distance'].includes(f)) return;
+    t[f] = e.target.value;
+    if (f !== 'distance') scheduleGeocode(t, f);
+    update();
+  });
 
-function selectedPeriod() {
-  return el.periodNuit.checked ? 'nuit' : 'jour';
-}
+  el.trips.addEventListener('change', (e) => {
+    const t = tripFromEvent(e);
+    const f = e.target.dataset.f;
+    if (!t) return;
+    if (f === 'period') t.period = e.target.value;
+    else if (f === 'rate') t.rate = Number(e.target.value);
+    else return;
+    update();
+  });
 
-function formatDuration(min) {
-  if (min == null) return null;
-  const h = Math.floor(min / 60);
-  const m = Math.round(min % 60);
-  return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`;
-}
+  el.trips.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-a]');
+    const maps = e.target.closest('.maps-link');
+    if (maps && maps.getAttribute('aria-disabled') === 'true') {
+      e.preventDefault();
+      toast('Renseignez le départ et la destination');
+      return;
+    }
+    if (!btn) return;
+    const t = tripFromEvent(e);
+    if (!t) return;
+    const node = tripNode(t);
+    switch (btn.dataset.a) {
+      case 'remove':
+        removeTrip(t);
+        return;
+      case 'reset-km':
+        t.distance = String(t.apiDistance);
+        node.querySelector('[data-f="distance"]').value = t.distance;
+        break;
+      case 'same-km':
+        t.distance = state.trips[0].distance;
+        node.querySelector('[data-f="distance"]').value = t.distance;
+        break;
+      case 'metro':
+        t.metropole = !effectiveMetro(t);
+        break;
+      case 'metro-auto':
+        t.metropole = null;
+        break;
+      case 'period-auto':
+        t.period = null;
+        break;
+      default:
+        return;
+    }
+    update();
+  });
 
-/* ---------- Tarif kilométrique ---------- */
+  // Mémorise les détails de prix ouverts entre deux rafraîchissements
+  el.priceList.addEventListener(
+    'toggle',
+    (e) => {
+      const id = Number(e.target.dataset?.id);
+      if (!id) return;
+      if (e.target.open) state.openFares.add(id);
+      else state.openFares.delete(id);
+    },
+    true,
+  );
 
-function renderRates() {
-  el.rateGroup.innerHTML = TARIFS.ratesPerKm
-    .map((r, i) => {
-      const id = `rate-${i}`;
-      const checked = r === TARIFS.defaultRatePerKm ? ' checked' : '';
-      return `<input type="radio" name="rate" id="${id}" value="${r}"${checked} /><label for="${id}">${num(r.toFixed(2))} €</label>`;
-    })
-    .join('');
-}
+  el.add.addEventListener('click', addTrip);
+  el.reset.addEventListener('click', resetAll);
 
-/* ---------- Horaire jour / nuit ---------- */
-
-function departureDate() {
-  const v = el.departure.value;
-  const d = v ? new Date(v) : new Date();
-  return Number.isNaN(d.getTime()) ? new Date() : d;
-}
-
-function syncPeriod() {
-  const auto = periodForDate(departureDate());
-  if (state.periodAuto) {
-    (auto === 'nuit' ? el.periodNuit : el.periodJour).checked = true;
-  }
-  const p = TARIFS.periods;
-  const current = selectedPeriod();
-  el.periodBadge.textContent = state.periodAuto ? 'Auto' : 'Manuel';
-  el.periodBadge.classList.toggle('badge-accent', state.periodAuto);
-  el.periodHint.textContent =
-    current === 'jour'
-      ? `Tarif de jour (${p.jour.startHour} h – ${p.nuit.startHour} h) · × ${num(p.jour.multiplier)} sur la distance. `
-      : `Tarif de nuit (${p.nuit.startHour} h – ${p.jour.startHour} h) · × ${num(p.nuit.multiplier)} sur le total. `;
-  el.periodAuto.classList.toggle('hidden', state.periodAuto || current === auto);
-  if (!state.periodAuto && current === auto) {
-    state.periodAuto = true;
-    syncPeriod();
-  }
-}
-
-/* ---------- Métropole ---------- */
-
-function placeFor(key, input) {
-  const text = input.value.trim();
-  if (!text) return null;
-  const geo = state.places[key];
-  // Le géocodage n'est utilisé que s'il correspond à la saisie actuelle
-  if (geo && geo.query === text) return { text, ...geo };
-  return { text };
-}
-
-function detectMetro(courseNo) {
-  const origin = placeFor('origin', el.origin);
-  const dest = courseNo === 1 ? placeFor('destination', el.destination) : placeFor('destination2', el.destination2);
-  const o = checkMetropole(origin);
-  const d = checkMetropole(dest);
-  if (o.inZone) return { inZone: true, reason: `départ en zone (${o.reason})`, any: !!(origin || dest) };
-  if (d.inZone) return { inZone: true, reason: `destination en zone (${d.reason})`, any: true };
-  return { inZone: false, reason: null, any: !!(origin || dest) };
-}
-
-function syncMetro(courseNo) {
-  const m = state.metro[courseNo];
-  const input = courseNo === 1 ? el.metropole : el.metropole2;
-  const hint = courseNo === 1 ? el.metropoleHint : el.metropole2Hint;
-  const autoBtn = courseNo === 1 ? el.metropoleAuto : el.metropole2Auto;
-
-  const det = detectMetro(courseNo);
-  m.detected = det;
-  if (m.auto) input.checked = det.inZone;
-
-  let text;
-  if (!det.any) text = 'Saisissez le trajet pour la détection automatique.';
-  else if (det.inZone) text = `Détecté automatiquement : ${det.reason}.`;
-  else text = 'Ni le départ ni la destination ne sont en zone Métropole.';
-  if (!m.auto) text = `Réglé à la main (${input.checked ? 'activé' : 'désactivé'}). `;
-  hint.textContent = text + ' ';
-  autoBtn.classList.toggle('hidden', m.auto);
-}
-
-const geocodeField = debounce(async (key, input) => {
-  const query = input.value.trim();
-  if (query.length < 3) return;
-  const result = await geocode(query);
-  if (input.value.trim() !== query) return; // saisie modifiée entre-temps
-  state.places[key] = result ? { ...result, query } : null;
-  syncMetro(1);
-  if (state.secondActive) syncMetro(2);
-  render();
-}, 600);
-
-/* ---------- Distance (saisie manuelle / API) ---------- */
-
-function syncDistanceUI(courseNo) {
-  const input = courseNo === 1 ? el.distance : el.distance2;
-  const reset = courseNo === 1 ? el.distanceReset : el.distance2Reset;
-  const api = state.apiDistance[courseNo];
-  const modified = api != null && readNumber(input) !== api;
-  reset.classList.toggle('hidden', !modified);
-  if (courseNo === 1) {
-    el.distanceSource.classList.toggle('hidden', api == null);
-    el.distanceSource.textContent = modified
-      ? `Modifiée à la main (itinéraire calculé : ${num(api)} km).`
-      : 'Calculée automatiquement par l’itinéraire.';
-  }
+  // L'horaire automatique suit l'heure courante
+  setInterval(update, 60_000);
 }
 
 /**
- * Point d'entrée pour la future API itinéraire : remplit la distance (et la durée)
- * et mémorise la valeur pour le bouton ↺.
+ * Point d'entrée pour la future API itinéraire : remplit distance et durée d'un trajet
+ * (index à partir de 0) et mémorise la distance pour le bouton ↺.
  */
-function setRouteResult(courseNo, { distanceKm, durationMin }) {
-  state.apiDistance[courseNo] = distanceKm;
-  state.apiDuration[courseNo] = durationMin ?? null;
-  (courseNo === 1 ? el.distance : el.distance2).value = distanceKm;
-  if (durationMin != null) (courseNo === 1 ? el.duration : el.duration2).value = Math.round(durationMin);
-  render();
-}
-
-/* ---------- Liens Google Maps ---------- */
-
-function syncMapsLinks() {
-  const o = el.origin.value.trim();
-  const d = el.destination.value.trim();
-  const d2 = el.destination2.value.trim();
-  setLink(el.mapsLink, o && d ? googleMapsDirectionsUrl(o, d) : null);
-  setLink(el.mapsLink2, o && d2 ? googleMapsDirectionsUrl(o, d2) : null);
-  el.secondOriginLabel.textContent = o || '— (renseignez le départ)';
-}
-
-function setLink(a, url) {
-  if (url) {
-    a.href = url;
-    a.removeAttribute('aria-disabled');
-  } else {
-    a.href = '#';
-    a.setAttribute('aria-disabled', 'true');
-  }
-}
-
-/* ---------- Calcul et affichage ---------- */
-
-function fareFor(courseNo) {
-  const distanceKm = readNumber(courseNo === 1 ? el.distance : el.distance2);
-  if (distanceKm == null) return null;
-  const metropole = (courseNo === 1 ? el.metropole : el.metropole2).checked;
-  const params = { distanceKm, ratePerKm: selectedRate(), period: selectedPeriod(), metropole };
-  return { params, fare: computeFare(params), durationMin: readNumber(courseNo === 1 ? el.duration : el.duration2) };
-}
-
-function breakdownHtml({ params, fare, durationMin }) {
-  const p = TARIFS.periods[params.period];
-  const badges = [
-    `<span class="badge">${params.period === 'jour' ? '☀︎' : '☾'} ${p.label}</span>`,
-    `<span class="badge">${num(params.distanceKm)} km</span>`,
-    `<span class="badge">${num(params.ratePerKm.toFixed(2))} €/km</span>`,
-    params.metropole ? '<span class="badge badge-accent">Métropole</span>' : '',
-    durationMin != null ? `<span class="badge">⏱ ${formatDuration(durationMin)}</span>` : '',
-  ].join('');
-  const rows = fare.lines
-    .map(
-      (l) =>
-        `<tr><td>${l.label}<span class="detail">${l.detail}</span></td><td>${l.key === 'pickup' || l.key === 'distance' ? '' : '+ '}${formatEuro(l.amount)}</td></tr>`,
-    )
-    .join('');
-  return `
-    <div class="result-meta">${badges}</div>
-    <table class="breakdown">
-      <tbody>${rows}
-        <tr class="total"><td>Total</td><td>${formatEuro(fare.total)}</td></tr>
-      </tbody>
-    </table>`;
-}
-
-let last = { 1: null, 2: null };
-
-function render() {
-  syncPeriod();
-  syncMapsLinks();
-  syncDistanceUI(1);
-  if (state.secondActive) syncDistanceUI(2);
-
-  const r1 = fareFor(1);
-  last[1] = r1;
-  if (r1) {
-    el.price1.textContent = formatEuro(r1.fare.total);
-    el.result1.innerHTML = breakdownHtml(r1);
-  } else {
-    el.price1.textContent = '—';
-    el.result1.innerHTML = '<p class="empty-state">Indiquez la distance pour obtenir le prix.</p>';
-  }
-  el.result1Suffix.textContent = state.secondActive ? ' · 1re course' : '';
-
-  let r2 = null;
-  if (state.secondActive) {
-    r2 = fareFor(2);
-    last[2] = r2;
-    el.price2.textContent = r2 ? formatEuro(r2.fare.total) : '—';
-    el.result2.innerHTML = r2 ? breakdownHtml(r2) : '';
-    const both = r1 && r2;
-    el.combined.classList.toggle('hidden', !both);
-    if (both) el.priceTotal.textContent = formatEuro(Math.round((r1.fare.total + r2.fare.total) * 100) / 100);
-  } else {
-    last[2] = null;
-  }
-
-  el.save.disabled = !r1;
-  el.save.textContent = state.secondActive && r2 ? 'Enregistrer les 2 courses' : 'Enregistrer la course';
-}
-
-/* ---------- 2e course ---------- */
-
-function setSecond(active) {
-  state.secondActive = active;
-  el.second.classList.toggle('hidden', !active);
-  el.addSecond.classList.toggle('hidden', active);
-  if (active) {
-    syncMetro(2);
-    el.destination2.focus();
-  }
-  render();
-}
-
-/* ---------- Enregistrement ---------- */
-
-function recordFor(courseNo, r, groupId) {
-  return {
-    groupId,
-    courseNo,
-    origin: el.origin.value.trim(),
-    destination: (courseNo === 1 ? el.destination : el.destination2).value.trim(),
-    departureAt: departureDate().toISOString(),
-    distanceKm: r.params.distanceKm,
-    distanceSource: state.apiDistance[courseNo] != null && state.apiDistance[courseNo] === r.params.distanceKm ? 'api' : 'manual',
-    durationMin: r.durationMin,
-    period: r.params.period,
-    ratePerKm: r.params.ratePerKm,
-    metropole: r.params.metropole,
-    total: r.fare.total,
-  };
-}
-
-async function save(e) {
-  e.preventDefault();
-  if (!last[1]) return;
-  const groupId = crypto.randomUUID?.() ?? String(Date.now());
-  try {
-    await courses.save(recordFor(1, last[1], groupId));
-    if (state.secondActive && last[2]) await courses.save(recordFor(2, last[2], groupId));
-    toast(state.secondActive && last[2] ? '2 courses enregistrées' : 'Course enregistrée');
-  } catch (err) {
-    toast(err.message);
-  }
-}
-
-function resetAll() {
-  el.form.reset();
-  renderRates();
-  state.periodAuto = true;
-  state.metro[1].auto = true;
-  state.metro[2].auto = true;
-  state.places = { origin: null, destination: null, destination2: null };
-  state.apiDistance = { 1: null, 2: null };
-  state.apiDuration = { 1: null, 2: null };
-  el.departure.value = toLocalInputValue(new Date());
-  setSecond(false);
-  syncMetro(1);
-  render();
-}
-
-/* ---------- Événements ---------- */
-
-function bind() {
-  el.form.addEventListener('submit', save);
-  el.form.addEventListener('input', render);
-  el.form.addEventListener('change', render);
-
-  for (const [key, input] of [
-    ['origin', el.origin],
-    ['destination', el.destination],
-    ['destination2', el.destination2],
-  ]) {
-    input.addEventListener('input', () => {
-      syncMetro(1);
-      if (state.secondActive) syncMetro(2);
-      geocodeField(key, input);
-    });
-  }
-
-  el.departure.addEventListener('change', () => {
-    state.periodAuto = true;
-    render();
-  });
-  for (const radio of [el.periodJour, el.periodNuit]) {
-    radio.addEventListener('change', () => {
-      state.periodAuto = false;
-      render();
-    });
-  }
-  el.periodAuto.addEventListener('click', () => {
-    state.periodAuto = true;
-    render();
-  });
-
-  el.metropole.addEventListener('change', () => {
-    state.metro[1].auto = false;
-    syncMetro(1);
-  });
-  el.metropoleAuto.addEventListener('click', () => {
-    state.metro[1].auto = true;
-    syncMetro(1);
-    render();
-  });
-  el.metropole2.addEventListener('change', () => {
-    state.metro[2].auto = false;
-    syncMetro(2);
-  });
-  el.metropole2Auto.addEventListener('click', () => {
-    state.metro[2].auto = true;
-    syncMetro(2);
-    render();
-  });
-
-  el.distanceReset.addEventListener('click', () => {
-    el.distance.value = state.apiDistance[1];
-    render();
-  });
-  el.distance2Reset.addEventListener('click', () => {
-    el.distance2.value = state.apiDistance[2];
-    render();
-  });
-
-  for (const a of [el.mapsLink, el.mapsLink2]) {
-    a.addEventListener('click', (e) => {
-      if (a.getAttribute('aria-disabled') === 'true') {
-        e.preventDefault();
-        toast('Renseignez le départ et la destination');
-      }
-    });
-  }
-
-  el.addSecond.addEventListener('click', () => setSecond(true));
-  el.removeSecond.addEventListener('click', () => {
-    el.destination2.value = '';
-    el.distance2.value = '';
-    el.duration2.value = '';
-    state.metro[2].auto = true;
-    state.apiDistance[2] = null;
-    setSecond(false);
-  });
-  el.resetForm.addEventListener('click', resetAll);
-
-  // Met à jour l'horaire automatique si la page reste ouverte longtemps
-  setInterval(() => {
-    if (state.periodAuto) render();
-  }, 60_000);
+function setRouteResult(index, { distanceKm, durationMin }) {
+  const t = state.trips[index];
+  if (!t) return;
+  t.apiDistance = distanceKm;
+  t.apiDuration = durationMin ?? null;
+  t.distance = String(distanceKm);
+  tripNode(t).querySelector('[data-f="distance"]').value = t.distance;
+  update();
 }
 
 /* ---------- Démarrage ---------- */
 
-renderRates();
-el.departure.value = toLocalInputValue(new Date());
+mountTrip(state.trips[0]);
 initInfoButtons();
 bind();
-syncMetro(1);
-render();
+update();
 
-// Exposé pour la future intégration de l'API itinéraire (et pour tester à la main dans la console)
 window.TaxiMeter = { setRouteResult };

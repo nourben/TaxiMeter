@@ -2,8 +2,8 @@
 
 **🌐 Site en ligne : https://nourben.github.io/TaxiMeter/**
 
-Estimation du prix d'une course de taxi : distance (saisie ou relevée sur Google Maps), tarif jour/nuit automatique,
-supplément Métropole, choix du tarif kilométrique, 2e course en parallèle, historique et statistiques.
+Estimation du prix d’une course de taxi : jusqu’à 20 trajets par course, distance (saisie ou relevée sur Google Maps), tarif jour/nuit automatique,
+supplément Métropole et tarif au km réglables par trajet, prix total et détail par trajet.
 
 Site statique (HTML/CSS/JS sans framework, sans build), publié par GitHub Pages depuis la branche `main`.
 

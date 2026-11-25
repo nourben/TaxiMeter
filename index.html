@@ -18,210 +18,31 @@
     <main>
       <h1 class="page-title">Estimer une course</h1>
 
-      <form id="fare-form" novalidate autocomplete="off">
-        <!-- 1. Trajet -->
-        <section class="card" aria-labelledby="h-trajet">
+      <form id="fare-form" novalidate autocomplete="off" onsubmit="return false">
+        <section class="card" aria-labelledby="h-trips">
           <div class="card-head">
-            <h2 id="h-trajet"><span class="step">1</span>Trajet</h2>
-            <button class="info-btn" data-info="trajet" aria-label="Aide sur le trajet">i</button>
+            <h2 id="h-trips">Trajet</h2>
+            <button class="info-btn" data-info="trajet" aria-label="Aide sur les trajets">i</button>
           </div>
-
-          <div class="field">
-            <label for="origin">Départ</label>
-            <input type="text" id="origin" name="origin" placeholder="Adresse ou ville de départ" enterkeyhint="next" />
-          </div>
-          <div class="field">
-            <label for="destination">Destination</label>
-            <input type="text" id="destination" name="destination" placeholder="Adresse ou ville d’arrivée" enterkeyhint="next" />
-          </div>
-
-          <a id="maps-link" class="btn btn-block" href="#" target="_blank" rel="noopener" aria-disabled="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
-            Voir l’itinéraire dans Google Maps
-          </a>
-        </section>
-
-        <!-- 2. Distance -->
-        <section class="card" aria-labelledby="h-distance">
-          <div class="card-head">
-            <h2 id="h-distance"><span class="step">2</span>Distance et durée</h2>
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="distance">Distance</label>
-              <button class="info-btn" data-info="distance" aria-label="Aide sur la distance">i</button>
-            </div>
-            <div class="input-with-suffix">
-              <div class="grow">
-                <input type="number" id="distance" name="distance" inputmode="decimal" min="0" step="0.1" placeholder="ex. 20" />
-                <span class="suffix">km</span>
-              </div>
-              <button type="button" class="btn reset-btn hidden" id="distance-reset" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
-            </div>
-            <p class="hint hidden" id="distance-source"></p>
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <label for="duration">Temps de trajet <span class="muted">(facultatif)</span></label>
-              <button class="info-btn" data-info="duree" aria-label="Aide sur le temps de trajet">i</button>
-            </div>
-            <div class="input-with-suffix">
-              <div class="grow">
-                <input type="number" id="duration" name="duration" inputmode="numeric" min="0" step="1" placeholder="ex. 25" />
-                <span class="suffix">min</span>
-              </div>
-            </div>
+          <div id="trips"></div>
+          <div class="add-row">
+            <button type="button" class="link-btn link-add" id="add-trip">+ Ajouter un trajet</button>
+            <span class="muted small hidden" id="trip-limit"></span>
           </div>
         </section>
 
-        <!-- 3. Tarif -->
-        <section class="card" aria-labelledby="h-tarif">
-          <div class="card-head">
-            <h2 id="h-tarif"><span class="step">3</span>Tarif</h2>
-          </div>
-
-          <div class="field">
-            <label for="departure">Date et heure de départ</label>
-            <input type="datetime-local" id="departure" name="departure" />
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <span class="label" id="lbl-period">Horaire</span>
-              <button class="info-btn" data-info="horaire" aria-label="Aide sur les horaires jour et nuit">i</button>
-              <span class="badge badge-accent" id="period-badge">Auto</span>
-            </div>
-            <div class="segmented" role="radiogroup" aria-labelledby="lbl-period">
-              <input type="radio" name="period" id="period-jour" value="jour" />
-              <label for="period-jour">☀︎ Jour</label>
-              <input type="radio" name="period" id="period-nuit" value="nuit" />
-              <label for="period-nuit">☾ Nuit</label>
-            </div>
-            <p class="hint">
-              <span id="period-hint"></span>
-              <button type="button" class="link-btn hidden" id="period-auto">Revenir à l’automatique</button>
-            </p>
-          </div>
-
-          <div class="field">
-            <div class="switch-row">
-              <div class="label-row" style="margin:0">
-                <label for="metropole">Supplément Métropole</label>
-                <button class="info-btn" data-info="metropole" aria-label="Aide sur la zone Métropole">i</button>
-              </div>
-              <span class="switch">
-                <input type="checkbox" id="metropole" name="metropole" role="switch" />
-                <span class="track"></span>
-              </span>
-            </div>
-            <p class="hint">
-              <span id="metropole-hint">Saisissez le trajet pour la détection automatique.</span>
-              <button type="button" class="link-btn hidden" id="metropole-auto">Revenir à l’automatique</button>
-            </p>
-          </div>
-
-          <div class="field">
-            <div class="label-row">
-              <span class="label" id="lbl-rate">Tarif kilométrique</span>
-              <button class="info-btn" data-info="tarifKm" aria-label="Aide sur le tarif kilométrique">i</button>
-            </div>
-            <div class="segmented" role="radiogroup" aria-labelledby="lbl-rate" id="rate-group"></div>
-          </div>
-        </section>
-
-        <!-- Résultat course 1 -->
-        <section class="card result" aria-live="polite" aria-labelledby="h-result">
+        <section class="card result" aria-live="polite" aria-labelledby="h-price">
           <div class="result-total">
-            <h2 id="h-result">Prix estimé<span class="muted" id="result-1-suffix"></span></h2>
-            <div class="price" id="price-1">—</div>
+            <h2 id="h-price">Prix estimé</h2>
+            <div class="price" id="price-total">—</div>
           </div>
-          <div id="result-1-body">
-            <p class="empty-state">Indiquez la distance pour obtenir le prix.</p>
-          </div>
+          <p class="hint hidden" id="price-note"></p>
+          <div id="price-list"><p class="empty-state">Indiquez la distance pour obtenir le prix.</p></div>
         </section>
 
-        <!-- 2e course -->
-        <button type="button" class="btn btn-block" id="add-second">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          Ajouter une 2e course (même départ)
-        </button>
-
-        <section class="card hidden" id="second-course" aria-labelledby="h-second" style="margin-top:14px">
-          <div class="card-head">
-            <h2 id="h-second">2e course</h2>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button class="info-btn" data-info="secondeCourse" aria-label="Aide sur la 2e course">i</button>
-              <button type="button" class="btn btn-ghost" id="remove-second" style="min-height:32px;padding:4px 8px">Retirer</button>
-            </div>
-          </div>
-
-          <p class="hint" style="margin-top:-6px;margin-bottom:12px">Départ : <strong id="second-origin-label">—</strong></p>
-
-          <div class="field">
-            <label for="destination-2">Destination du 2e client</label>
-            <input type="text" id="destination-2" placeholder="Adresse ou ville d’arrivée" />
-          </div>
-
-          <a id="maps-link-2" class="btn btn-block" href="#" target="_blank" rel="noopener" aria-disabled="true" style="margin-bottom:14px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
-            Itinéraire de la 2e course
-          </a>
-
-          <div class="grid-2">
-            <div class="field">
-              <label for="distance-2">Distance</label>
-              <div class="input-with-suffix">
-                <div class="grow">
-                  <input type="number" id="distance-2" inputmode="decimal" min="0" step="0.1" placeholder="ex. 18" />
-                  <span class="suffix">km</span>
-                </div>
-                <button type="button" class="btn reset-btn hidden" id="distance-2-reset" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
-              </div>
-            </div>
-            <div class="field">
-              <label for="duration-2">Temps <span class="muted">(facult.)</span></label>
-              <div class="input-with-suffix">
-                <div class="grow">
-                  <input type="number" id="duration-2" inputmode="numeric" min="0" step="1" placeholder="ex. 22" />
-                  <span class="suffix">min</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="field">
-            <div class="switch-row">
-              <label for="metropole-2">Supplément Métropole</label>
-              <span class="switch">
-                <input type="checkbox" id="metropole-2" role="switch" />
-                <span class="track"></span>
-              </span>
-            </div>
-            <p class="hint">
-              <span id="metropole-2-hint">Saisissez la destination pour la détection automatique.</span>
-              <button type="button" class="link-btn hidden" id="metropole-2-auto">Revenir à l’automatique</button>
-            </p>
-          </div>
-
-          <div class="result-total" style="margin-top:8px">
-            <span class="label">Prix 2e course</span>
-            <div class="price" id="price-2" style="font-size:1.8rem">—</div>
-          </div>
-          <div id="result-2-body"></div>
-
-          <div class="combined hidden" id="combined" style="margin-top:14px;padding-top:12px;border-top:2px solid var(--text)">
-            <span>Total des 2 courses</span>
-            <span class="price" id="price-total">—</span>
-          </div>
-        </section>
-
-        <div class="actions">
-          <button type="button" class="btn" id="reset-form">Effacer</button>
-          <button type="submit" class="btn btn-primary" id="save-course" disabled>Enregistrer la course</button>
-        </div>
-        <p class="hint" style="text-align:center">Pour l’instant, les courses sont enregistrées sur cet appareil uniquement.</p>
+        <p style="text-align:center;margin:0">
+          <button type="button" class="link-btn" id="reset-form">Tout effacer</button>
+        </p>
       </form>
     </main>
 
