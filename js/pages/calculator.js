@@ -277,7 +277,10 @@ function updateTrip(t, index, count) {
   const msg = o('route-msg');
   msg.classList.toggle('hidden', !t.routeMsg);
   msg.classList.toggle('is-error', !!t.routeMsg?.error);
-  msg.textContent = t.routeMsg?.text ?? '';
+  const dur = !t.routeMsg?.error && Number.isFinite(t.routeMsg?.durationMin) ? formatDuration(t.routeMsg.durationMin) : '';
+  msg.innerHTML = t.routeMsg
+    ? `<span>${esc(t.routeMsg.text)}</span>${dur ? `<span class="route-time" title="Temps de trajet estimé">⏱ ${dur}</span>` : ''}`
+    : '';
 
   const maps = o('maps');
   if (t.origin.trim() && t.destination.trim()) {
@@ -605,6 +608,7 @@ async function calculateDistance(t) {
     const index = state.trips.indexOf(t);
     const detour = round2(r.distanceKm - r.shortest.distanceKm);
     t.routeMsg = {
+      durationMin: r.durationMin,
       text:
         r.reason === 'faster-alternative'
           ? `Distance calculée : ${fmtKm(r.distanceKm)}. Le plus court (${fmtKm(r.shortest.distanceKm)}) était chargé : itinéraire plus rapide retenu, ${fmtKm(detour)} de plus.`

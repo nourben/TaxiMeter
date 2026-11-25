@@ -1332,6 +1332,10 @@ input:focus {
 
 /* Résultat du calcul de distance */
 .route-msg {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
   margin: 8px 0 0;
   font-size: 0.8rem;
   padding: 7px 10px;
@@ -1393,4 +1397,10 @@ input:focus {
 }
 .breakdown tr.discount td:last-child {
   color: var(--success);
+}
+
+.route-time {
+  flex-shrink: 0;
+  font-weight: 700;
+  white-space: nowrap;
 }
