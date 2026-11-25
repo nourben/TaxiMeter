@@ -55,6 +55,7 @@ export const TASKS = [
   // ---------- Plus tard ----------
   { status: 'later', area: 'Réflexion', title: 'Transformer le site en outil de suivi des courses de taxi ?', note: 'À réfléchir : les chauffeurs ne saisiront pas forcément toutes leurs courses ici.' },
   { status: 'later', area: 'Suivi', title: 'Date et heure de départ, enregistrement des courses, comptes utilisateurs', note: 'Retiré de l’interface pour l’instant ; le code de stockage local reste prêt.' },
+  { status: 'later', area: 'Tarifs', title: 'Vérifier s’il faut proposer un tarif qui n’est ni jour ni nuit', note: 'Pas sûr que les utilisateurs en aient besoin : à voir avec eux dans un second temps (ex. l’exemple Métropole à 47,20 € sans coefficient).' },
   { status: 'later', area: 'Supabase', title: 'Créer le projet Supabase (de votre côté)' },
   { status: 'later', area: 'Supabase', title: 'Créer la table des courses (mêmes champs que l’enregistrement actuel)' },
   { status: 'later', area: 'Supabase', title: 'Règles d’accès (RLS) : qui peut lire et écrire les courses' },
