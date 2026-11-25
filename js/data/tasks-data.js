@@ -40,7 +40,7 @@ export const TASKS = [
   { status: 'validate', area: 'Tarifs', title: 'Zone Métropole : rayon de 11 km autour de Notre-Dame + codes postaux 75/92/93/94', note: 'Paris – Créteil ≈ 10,4 km à vol d’oiseau. Certaines communes de petite couronne dépassent 11 km mais sont incluses par leur code postal.' },
   { status: 'validate', area: 'Tarifs', title: 'Trajets supplémentaires : prise en charge de 13 € comptée à chaque trajet ?', note: 'Aujourd’hui chaque trajet est calculé comme une course complète (prise en charge et 4 km inclus compris), puis les montants sont additionnés.' },
   { status: 'validate', area: 'API itinéraire', title: 'Seuil « trajet long » : durée > distance × 1,3', note: '« Largement plus que 1 km = 1 min » traduit par un ratio de 1,3 (réglable).' },
-  { status: 'validate', area: 'Tarifs', title: 'Règle des 50 km de jour : 50 km pile inclus, et × 1,5 sur toute la distance ?', note: 'Aujourd’hui : dès 50,0 km, tout le trajet passe à × 1,5 sur la distance (pas seulement les km au-delà de 50). La nuit n’est pas concernée.' },
+  { status: 'validate', area: 'Tarifs', title: 'Règle des 50 km de jour : × 1,5 sur toute la distance ou seulement au-delà de 50 km ?', note: 'Confirmé : 50 km pile compte comme longue distance. Aujourd’hui tout le trajet passe à × 1,5 sur la distance ; la nuit n’est pas concernée.' },
   { status: 'validate', area: 'Interface', title: 'Valider l’interface (mobile et ordinateur, clair et sombre)' },
 
   // ---------- À faire (prochaine étape) ----------
