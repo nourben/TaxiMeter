@@ -34,11 +34,27 @@ function json(body: unknown, status: number, origin: string | null) {
 }
 
 const str = (v: FormDataEntryValue | null, max: number) => String(v ?? '').trim().slice(0, max);
+/** Texte sur une ligne (sujet, nom, coordonnées) : pas de retour à la ligne ni de caractère de contrôle. */
+const line = (v: FormDataEntryValue | null, max: number) => str(v, max).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
 
 async function sha256(text: string) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+/** Vérifie le vrai format du fichier d'après ses premiers octets (le type déclaré par le navigateur peut mentir). */
+function realType(b: Uint8Array): string | null {
+  const ascii = (from: number, to: number) => String.fromCharCode(...b.subarray(from, to));
+  if (ascii(0, 5) === '%PDF-') return 'application/pdf';
+  if (b[0] === 0x89 && ascii(1, 4) === 'PNG') return 'image/png';
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') return 'image/webp';
+  if (ascii(4, 8) === 'ftyp' && ['heic', 'heix', 'hevc', 'mif1', 'msf1', 'heif'].includes(ascii(8, 12))) return 'image/heic';
+  return null;
+}
+
+/** Nom de fichier sans chemin ni caractères de contrôle. */
+const safeName = (n: string) => n.replace(/[\\/\u0000-\u001f\u007f]/g, '_').replace(/^\.+/, '').slice(0, 120) || 'piece-jointe';
 
 function toBase64(bytes: Uint8Array) {
   let bin = '';
@@ -89,10 +105,10 @@ async function handle(req: Request): Promise<Response> {
   }
 
   // 2. Validation des champs
-  const name = str(form.get('name'), 100);
-  const email = str(form.get('email'), 200);
-  const phone = str(form.get('phone'), 30);
-  const subject = str(form.get('subject'), 150);
+  const name = line(form.get('name'), 100);
+  const email = line(form.get('email'), 200);
+  const phone = line(form.get('phone'), 30);
+  const subject = line(form.get('subject'), 150);
   const message = str(form.get('message'), 5000);
   const emailOk = email === '' || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   const phoneOk = phone === '' || phone.replace(/[^\d]/g, '').length >= 9;
@@ -107,7 +123,9 @@ async function handle(req: Request): Promise<Response> {
   if (file instanceof File && file.size > 0) {
     if (file.size > MAX_FILE_BYTES) return json({ error: 'too_large', message: 'Pièce jointe trop lourde (5 Mo maximum).' }, 413, origin);
     if (!ALLOWED_TYPES.includes(file.type)) return json({ error: 'bad_request', message: 'Format de pièce jointe non accepté (PDF ou image).' }, 400, origin);
-    attachment = { filename: file.name.slice(0, 120) || 'piece-jointe', content: toBase64(new Uint8Array(await file.arrayBuffer())) };
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!realType(bytes)) return json({ error: 'bad_request', message: 'Le fichier ne semble pas être un PDF ou une image.' }, 400, origin);
+    attachment = { filename: safeName(file.name), content: toBase64(bytes) };
   }
 
   // 3. Anti-robot Cloudflare Turnstile (si activé) et limite de fréquence par IP
