@@ -11,7 +11,7 @@ const FOOTER_LINKS = [
   { href: 'stats.html', label: 'Statistiques' },
   { href: 'cgv.html', label: 'CGV' },
   { href: 'mentions-legales.html', label: 'Mentions légales' },
-  { href: 'taches.html', label: 'Tâches' },
+  { href: 'https://github.com/nourben/TaxiMeter/issues', label: 'Tâches', external: true },
 ];
 
 function currentTheme() {
@@ -60,7 +60,8 @@ function renderFooter() {
   el.innerHTML = `
     <nav aria-label="Liens de pied de page">
       ${FOOTER_LINKS.map(
-        (l) => `<a href="${l.href}"${l.href === here ? ' aria-current="page"' : ''}>${l.label}</a>`,
+        (l) =>
+          `<a href="${l.href}"${l.href === here ? ' aria-current="page"' : ''}${l.external ? ' target="_blank" rel="noopener"' : ''}>${l.label}</a>`,
       ).join('')}
     </nav>
     <div>© ${new Date().getFullYear()} TaxiMeter · estimation indicative</div>`;

@@ -7,7 +7,7 @@ supplément Métropole et tarif au km réglables par trajet, prix total et déta
 
 Site statique (HTML/CSS/JS sans framework, sans build), publié par GitHub Pages depuis la branche `main`.
 
-- Suivi du projet (fait / à faire / à vérifier) : [page Tâches](https://nourben.github.io/TaxiMeter/taches.html)
+- Suivi du projet : [issues GitHub](https://github.com/nourben/TaxiMeter/issues) (une issue par tâche, étiquettes de statut et de domaine), affichées dans le tableau GitHub Project « TaxiMeter »
 - Statut : premier jet de l'interface — API itinéraire et base Supabase à venir
 - Mise en place de Supabase : [docs/SUPABASE.md](docs/SUPABASE.md)
 
@@ -29,7 +29,6 @@ npm test             # tests du calcul tarifaire et du choix d'itinéraire
 | `js/services/` | Lien Google Maps, géocodage et autocomplétion (IGN, gratuit), Supabase (statistiques) |
 | `js/ui/` | En-tête/pied de page/thème, infos contextuelles |
 | `js/pages/` | Script de chaque page |
-| `js/data/tasks-data.js` | Contenu de la page « Tâches » |
 | `tests/` | Tests `node --test` |
 
 ## Calcul
