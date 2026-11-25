@@ -1,6 +1,5 @@
 import { TARIFS, MAX_TRIPS, SHARED_TRANSPORT } from '../config/tarifs.js';
 import { computeFare, formatEuro, round2, sharedRate, applyDiscount } from '../core/pricing.js';
-import { nightRateFor } from '../core/period.js';
 import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
@@ -32,7 +31,7 @@ const el = {
 
 let seq = 0;
 /**
- * Un trajet. night / metropole valent null en mode automatique.
+ * Un trajet. metropole vaut null en mode automatique ; la majoration de nuit se choisit à la main.
  * apiDistance / apiDuration seront remplis par l'API itinéraire.
  */
 function newTrip() {
@@ -43,7 +42,7 @@ function newTrip() {
     distance: '',
     apiDistance: null,
     apiDuration: null,
-    night: null,
+    night: false,
     hospital: false,
     metropole: null,
     rate: TARIFS.defaultRatePerKm,
@@ -68,7 +67,7 @@ function readKm(value) {
 }
 
 function effectiveNight(t) {
-  return t.night ?? nightRateFor(new Date()).active;
+  return t.night;
 }
 
 function placeFor(t, key) {
@@ -184,7 +183,6 @@ function tripTemplate(t) {
         <div class="opt-row">
           <button type="button" class="chip opt-wide chip-icon" data-a="night" aria-pressed="false">${ICON_NIGHT}<span data-o="night-label">Nuit / WE / férié</span></button>
           <button class="info-btn" data-info="nuit" aria-label="Aide sur la majoration nuit, week-end et jours fériés">i</button>
-          <button type="button" class="link-btn auto-link hidden" data-a="night-auto" data-o="night-auto" title="Repasser en automatique">↺ auto</button>
         </div>
         <div class="opt-row opt-hosp">
           <button type="button" class="chip opt-wide chip-icon" data-a="hospital" aria-pressed="false">${ICON_HOSP}<span data-o="hosp-label">Hospitalisation</span></button>
@@ -224,7 +222,6 @@ function mountTrip(t) {
   initInfoButtons(node);
   // État auto / manuel affiché en tête de l'info contextuelle de chaque option
   for (const [info, out] of [
-    ['nuit', 'hint-night'],
     ['metropole', 'hint-metro'],
   ]) {
     const panel = document.getElementById(node.querySelector(`[data-info="${info}"]`).getAttribute('aria-controls'));
@@ -317,12 +314,6 @@ function updateTrip(t, index, count) {
   chip.textContent = metro ? `✓ Métropole +${num(TARIFS.metropole.supplement)} €` : 'Métropole';
   for (const radio of node.querySelectorAll('[data-f="rate"]')) radio.checked = Number(radio.value) === t.rate;
 
-  const auto = nightRateFor(new Date());
-  o('hint-night').textContent =
-    t.night == null
-      ? `Auto : ${auto.active ? 'active' : 'inactive'} en ce moment (${auto.reason})`
-      : `Réglée à la main : ${t.night ? 'active' : 'inactive'}`;
-  o('night-auto').classList.toggle('hidden', t.night == null);
 
   let metroText;
   if (t.metropole == null) {
@@ -584,10 +575,7 @@ function bind() {
         t.copiedFromFirst = false;
         break;
       case 'night':
-        t.night = !effectiveNight(t);
-        break;
-      case 'night-auto':
-        t.night = null;
+        t.night = !t.night;
         break;
       case 'hospital':
         t.hospital = !t.hospital;
