@@ -11,7 +11,6 @@ const FOOTER_LINKS = [
   { href: 'stats.html', label: 'Statistiques' },
   { href: 'cgv.html', label: 'CGV' },
   { href: 'mentions-legales.html', label: 'Mentions légales' },
-  { href: 'https://github.com/nourben/TaxiMeter/issues', label: 'Tâches', external: true },
 ];
 
 function currentTheme() {
