@@ -12,6 +12,7 @@ export const STATUSES = [
 export const TASKS = [
   // ---------- Fait ----------
   { status: 'done', area: 'Interface', title: 'Module Trajet : départ / destination, distance, temps de trajet estimé (affichage)' },
+  { status: 'done', area: 'Interface', title: 'Autocomplétion des adresses et villes (IGN Géoplateforme, gratuit) ; l’adresse choisie fiabilise la détection Métropole' },
   { status: 'done', area: 'Interface', title: 'Jusqu’à 20 trajets dans une même course (lien « + Ajouter un trajet »)' },
   { status: 'done', area: 'Interface', title: 'Titre « Trajet » → « Trajets » et numérotation Trajet 1, 2, 3… dès le 2e trajet' },
   { status: 'done', area: 'Interface', title: 'Bouton « Relever la distance en km sur Google Maps » à droite du départ / destination' },
@@ -56,7 +57,7 @@ export const TASKS = [
   { status: 'todo', area: 'API itinéraire', title: 'Garder le lien Google Maps et la saisie manuelle en secours si l’API échoue' },
   { status: 'todo', area: 'API itinéraire', title: 'Activer le bouton « Calculer la distance » (grisé pour l’instant)' },
   { status: 'todo', area: 'API itinéraire', title: 'Signaler quand la ville / l’adresse de départ ou de destination n’est pas reconnue', note: 'Message sous le champ concerné, en proposant de corriger la saisie ou de passer par Google Maps.' },
-  { status: 'validate', area: 'Interface', title: 'Autocomplétion des adresses et villes (France)', note: 'Proposition : service gratuit de l’IGN (Géoplateforme, ex-API Adresse), sans clé ni compte, déjà utilisé pour la détection Métropole. Liste de suggestions sous Départ / Destination dès 3 caractères ; la suggestion choisie donne aussi les coordonnées pour l’API itinéraire.' },
+  { status: 'check', area: 'Interface', title: 'Tester l’autocomplétion sur le site en ligne', note: 'Testée avec des réponses simulées : le service IGN n’est pas joignable depuis l’environnement de Claude. À vérifier sur GitHub Pages (adresse, rue, commune, choix au clavier et au doigt).' }
 
   // ---------- Plus tard ----------
   { status: 'later', area: 'Réflexion', title: 'Transformer le site en outil de suivi des courses de taxi ?', note: 'À réfléchir : les chauffeurs ne saisiront pas forcément toutes leurs courses ici.' },

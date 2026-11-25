@@ -3,7 +3,8 @@ import { computeFare, formatEuro, round2 } from '../core/pricing.js';
 import { periodForDate } from '../core/period.js';
 import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
-import { geocode } from '../services/geocoding.js';
+import { geocode, suggest } from '../services/geocoding.js';
+import { attachAutocomplete } from '../ui/autocomplete.js';
 import { initInfoButtons } from '../ui/info.js';
 
 const $ = (id) => document.getElementById(id);
@@ -188,6 +189,19 @@ function mountTrip(t) {
   for (const f of ['origin', 'destination', 'distance']) node.querySelector(`[data-f="${f}"]`).value = t[f];
   el.trips.appendChild(node);
   initInfoButtons(node);
+  for (const key of ['origin', 'destination']) {
+    const input = node.querySelector(`[data-f="${key}"]`);
+    attachAutocomplete(input, {
+      fetch: suggest,
+      onSelect: (place) => {
+        input.value = place.label;
+        t[key] = place.label;
+        t.geo[key] = { ...place, query: place.label };
+        clearTimeout(geoTimers.get(`${t.id}-${key}`));
+        update();
+      },
+    });
+  }
   return node;
 }
 

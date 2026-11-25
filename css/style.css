@@ -1217,3 +1217,47 @@ main.main-wide {
     padding-right: 6px;
   }
 }
+
+/* Autocomplétion des adresses */
+.route-line:focus-within {
+  z-index: 5;
+}
+.ac-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -1px;
+  right: -1px;
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(20, 20, 30, 0.16);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.ac-item {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  line-height: 1.3;
+}
+.ac-item:hover,
+.ac-item.active {
+  background: var(--surface-2);
+}
+.ac-label {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.ac-detail {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+.ac-detail:empty {
+  display: none;
+}
