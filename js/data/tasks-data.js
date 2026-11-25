@@ -35,7 +35,7 @@ export const TASKS = [
   { status: 'done', area: 'API itinéraire', title: 'Règle de choix d’itinéraire codée et testée (plus court, ou alternative ≤ +10 km si trajet long)' },
   { status: 'done', area: 'Déploiement', title: 'Code poussé sur GitHub (branche main) et README avec le lien du site' },
   { status: 'done', area: 'Stats', title: 'Page Statistiques : diagramme en barres jours / semaines / mois / années, branché sur Supabase' },
-  { status: 'done', area: 'Supabase', title: 'Projet Supabase relié au site ; estimations enregistrées anonymement' },
+  { status: 'done', area: 'Supabase', title: 'Projet Supabase relié au site ; estimations enregistrées anonymement quand un prix reste affiché 3 s sans changer (règle validée)' },
   { status: 'done', area: 'Stats', title: 'Calculs de distance comptés à part (clic sur « Calculer la distance »), 2e module replié sur la page Statistiques' },
   { status: 'done', area: 'Supabase', title: 'Schéma SQL prêt et testé : estimations, statistiques par période, compteur d’appels API' },
 
@@ -50,7 +50,7 @@ export const TASKS = [
   { status: 'validate', area: 'Interface', title: 'Valider l’interface (mobile et ordinateur, clair et sombre)' },
 
   // ---------- À faire (prochaine étape) ----------
-  { status: 'todo', area: 'API itinéraire', title: 'Créer une clé Google Maps Platform (Routes API) avec quota journalier plafonné' },
+  { status: 'done', area: 'API itinéraire', title: 'Clé Google Routes API créée et rangée dans les secrets Supabase' },
   { status: 'todo', area: 'API itinéraire', title: 'Fonction serveur Supabase « route » qui appelle Google Routes (clé non exposée dans le navigateur)' },
   { status: 'todo', area: 'API itinéraire', title: 'Appel Google Routes : itinéraires alternatifs + trafic à l’heure de départ' },
   { status: 'todo', area: 'API itinéraire', title: 'Compteur d’appels Google (table api_usage) : bloquer le calcul avant la limite gratuite' },
@@ -65,7 +65,6 @@ export const TASKS = [
   { status: 'later', area: 'Réflexion', title: 'Transformer le site en outil de suivi des courses de taxi ?', note: 'À réfléchir : les chauffeurs ne saisiront pas forcément toutes leurs courses ici.' },
   { status: 'later', area: 'Suivi', title: 'Date et heure de départ, enregistrement des courses, comptes utilisateurs', note: 'Retiré de l’interface pour l’instant ; le code de stockage local reste prêt.' },
   { status: 'later', area: 'Tarifs', title: 'Vérifier s’il faut proposer un tarif qui n’est ni jour ni nuit', note: 'Pas sûr que les utilisateurs en aient besoin : à voir avec eux dans un second temps (ex. l’exemple Métropole à 47,20 € sans coefficient).' },
-  { status: 'check', area: 'Supabase', title: 'Lancer le script supabase/migrations/0002_distance_calculations.sql dans Supabase', note: 'Sans lui, la page Statistiques affichera « Impossible de charger ».' },
   { status: 'later', area: 'Supabase', title: 'Règles d’accès (RLS) : qui peut lire et écrire les courses' },
   { status: 'later', area: 'Supabase', title: 'Remplacer le stockage de l’appareil par Supabase (storage.js)' },
   { status: 'later', area: 'Supabase', title: 'Connexion des chauffeurs (si plusieurs utilisateurs)' },
