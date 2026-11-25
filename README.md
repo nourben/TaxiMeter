@@ -9,6 +9,7 @@ Site statique (HTML/CSS/JS sans framework, sans build), publié par GitHub Pages
 
 - Suivi du projet (fait / à faire / à vérifier) : [page Tâches](https://nourben.github.io/TaxiMeter/taches.html)
 - Statut : premier jet de l'interface — API itinéraire et base Supabase à venir
+- Mise en place de Supabase : [docs/SUPABASE.md](docs/SUPABASE.md)
 
 ## Lancer en local
 
