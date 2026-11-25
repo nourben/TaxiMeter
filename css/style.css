@@ -1084,8 +1084,13 @@ input:focus {
     flex-wrap: nowrap;
   }
   .opt-row .opt-wide {
-    width: 58%;
+    width: 64%;
     flex: none;
+  }
+  .opt-wide.segmented label {
+    padding-left: 4px;
+    padding-right: 4px;
+    white-space: nowrap;
   }
   .opt-side {
     flex: 1 1 0;
