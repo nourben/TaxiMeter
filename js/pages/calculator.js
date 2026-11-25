@@ -100,6 +100,13 @@ const ICON_DAY =
 const ICON_NIGHT =
   '<svg class="period-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M14.8 6.6a5.6 5.6 0 1 0 2.6 9.6 4.6 4.6 0 0 1-2.6-9.6z"/></svg>';
 
+const ICON_TRASH =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>';
+const ICON_EYE_OFF =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.1 3.9M6.6 6.6C3.9 8.3 2.5 12 2.5 12S6 19 12 19a9.6 9.6 0 0 0 4.4-1.1"/></svg>';
+const ICON_EYE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+
 function tripTemplate(t) {
   const rates = TARIFS.ratesPerKm
     .map((r) => {
@@ -113,41 +120,49 @@ function tripTemplate(t) {
       <span class="trip-title" data-o="title"></span>
       <span class="trip-price" data-o="price"></span>
       <div class="trip-actions">
-        <button type="button" class="link-btn" data-a="exclude"></button>
-        <button type="button" class="link-btn danger-link" data-a="remove">Supprimer ce trajet</button>
+        <button type="button" class="btn btn-sm" data-a="exclude"></button>
+        <button type="button" class="btn btn-sm btn-danger" data-a="remove">${ICON_TRASH}<span>Supprimer ce trajet</span></button>
       </div>
     </div>
     <div class="trip-body">
-      <div class="route">
-        <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ (adresse ou ville)" aria-label="Départ" enterkeyhint="next" /></div>
-        <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination" enterkeyhint="next" /></div>
-      </div>
-      <a class="btn maps-btn" data-o="maps" target="_blank" rel="noopener">
-        ${PIN}
-        <span><strong>Voir le trajet sur Google Maps</strong><small>pour relever la distance en km</small></span>
-      </a>
-      <div class="trip-row">
-        <div class="km-field">
-          <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
-          <span class="suffix">km</span>
+      <div class="route-wrap">
+        <div class="route">
+          <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ" aria-label="Départ (adresse ou ville)" enterkeyhint="next" /></div>
+          <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination (adresse ou ville)" enterkeyhint="next" /></div>
         </div>
-        <button type="button" class="btn reset-btn hidden" data-a="reset-km" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
-        <button type="button" class="link-btn same-km" data-a="same-km">Même km que le trajet 1</button>
+        <a class="maps-btn" data-o="maps" target="_blank" rel="noopener">
+          ${PIN}
+          <span>Relever la distance en km<br />sur Google Maps</span>
+        </a>
+      </div>
+      <div class="km-field opt-wide">
+        <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
+        <button type="button" class="km-reset hidden" data-a="reset-km" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
+        <span class="suffix">km</span>
       </div>
       <div class="trip-meta">
         Temps de trajet estimé : <strong data-o="duration">—</strong>
         <span class="soon" data-o="soon" title="Le temps de trajet et la distance seront calculés automatiquement quand le calcul d’itinéraire sera branché">calcul auto à venir</span>
+        <button type="button" class="link-btn same-km" data-a="same-km">Même km que le trajet 1</button>
       </div>
       <div class="opts">
-        <button class="info-btn opts-info" data-info="options" aria-label="Aide sur les options du trajet">i</button>
-        <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Horaire">
-          <input type="radio" name="period-${t.id}" id="p-${t.id}-jour" value="jour" data-f="period" /><label for="p-${t.id}-jour">${ICON_DAY} Jour</label>
-          <input type="radio" name="period-${t.id}" id="p-${t.id}-nuit" value="nuit" data-f="period" /><label for="p-${t.id}-nuit">${ICON_NIGHT} Nuit</label>
+        <div class="opt-row">
+          <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Horaire">
+            <input type="radio" name="period-${t.id}" id="p-${t.id}-jour" value="jour" data-f="period" /><label for="p-${t.id}-jour">${ICON_DAY} Jour</label>
+            <input type="radio" name="period-${t.id}" id="p-${t.id}-nuit" value="nuit" data-f="period" /><label for="p-${t.id}-nuit">${ICON_NIGHT} Nuit</label>
+          </div>
+          <button class="info-btn" data-info="horaire" aria-label="Aide sur les horaires jour et nuit">i</button>
         </div>
-        <button type="button" class="chip opt-wide" data-a="metro" aria-pressed="false">Métropole</button>
         <p class="trip-hint" data-o="hint-period"></p>
+        <div class="opt-row opt-metro">
+          <button type="button" class="chip opt-wide" data-a="metro" aria-pressed="false">Métropole</button>
+          <button class="info-btn" data-info="metropole" aria-label="Aide sur la zone Métropole">i</button>
+        </div>
         <p class="trip-hint" data-o="hint-metro"></p>
-        <div class="segmented seg-sm opt-wide opt-rate" role="radiogroup" aria-label="Tarif kilométrique">${rates}</div>
+        <div class="opt-row opt-rate">
+          <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Tarif kilométrique">${rates}</div>
+          <button class="info-btn" data-info="tarifKm" aria-label="Aide sur le tarif kilométrique">i</button>
+        </div>
         <p class="trip-hint hidden" data-o="hint-rate"></p>
       </div>
     </div>`;
@@ -177,7 +192,7 @@ function updateTrip(t, index, count) {
   o('title').textContent = `Trajet ${index + 1}`;
   node.querySelector('.trip-actions').classList.toggle('hidden', index === 0);
   const excludeBtn = node.querySelector('[data-a="exclude"]');
-  excludeBtn.textContent = t.excluded ? 'Inclure dans le prix' : 'Exclure du prix';
+  excludeBtn.innerHTML = t.excluded ? `${ICON_EYE}<span>Inclure dans le prix</span>` : `${ICON_EYE_OFF}<span>Exclure du prix</span>`;
   excludeBtn.setAttribute('aria-pressed', String(!!t.excluded));
   node.classList.toggle('excluded', !!t.excluded);
   const r = fareOf(t);
