@@ -1,0 +1,4 @@
+# Réglages utilisés si la fonction est déployée avec la CLI Supabase.
+# Les nouvelles clés « publishable » ne sont pas des JWT : la vérification JWT doit être désactivée.
+[functions.route]
+verify_jwt = false

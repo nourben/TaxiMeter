@@ -6,6 +6,7 @@ import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
+import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
 
 const $ = (id) => document.getElementById(id);
@@ -44,6 +45,8 @@ function newTrip() {
     metropole: null,
     rate: TARIFS.defaultRatePerKm,
     excluded: false,
+    calculating: false,
+    routeMsg: null,
     geo: { origin: null, destination: null },
   };
 }
@@ -134,15 +137,16 @@ function tripTemplate(t) {
           <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination (adresse ou ville)" enterkeyhint="next" /></div>
       </div>
       <div class="route-actions">
-          <button type="button" class="calc-btn" data-a="calc" disabled title="Arrivera avec le calcul automatique d’itinéraire">
+          <button type="button" class="calc-btn" data-a="calc" data-o="calc" disabled>
             ${ICON_ROUTE}
-            <span>Calculer la distance<small>bientôt disponible</small></span>
+            <span data-o="calc-label">Calculer la distance<small>itinéraire le plus court</small></span>
           </button>
           <a class="maps-btn" data-o="maps" target="_blank" rel="noopener">
             ${PIN}
             <span class="maps-label"><span>Relever la distance<span class="wide-only"> en km</span></span><span><span class="narrow-only">en km </span>sur Google Maps</span></span>
           </a>
       </div>
+      <p class="route-msg hidden" data-o="route-msg" role="status"></p>
       <div class="opt-row opt-km">
       <div class="km-field opt-wide">
         <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
@@ -235,6 +239,17 @@ function updateTrip(t, index, count) {
   const firstKm = readKm(state.trips[0].distance);
   sameKm.classList.toggle('hidden', index === 0 || firstKm == null || firstKm === km);
 
+
+  const calc = o('calc');
+  const ready = t.origin.trim().length >= 2 && t.destination.trim().length >= 2;
+  calc.disabled = !ready || t.calculating;
+  o('calc-label').innerHTML = t.calculating
+    ? 'Calcul en cours…<small>interrogation de Google</small>'
+    : 'Calculer la distance<small>itinéraire le plus court</small>';
+  const msg = o('route-msg');
+  msg.classList.toggle('hidden', !t.routeMsg);
+  msg.classList.toggle('is-error', !!t.routeMsg?.error);
+  msg.textContent = t.routeMsg?.text ?? '';
 
   const maps = o('maps');
   if (t.origin.trim() && t.destination.trim()) {
@@ -438,7 +453,10 @@ function bind() {
     const f = e.target.dataset.f;
     if (!t || !['origin', 'destination', 'distance'].includes(f)) return;
     t[f] = e.target.value;
-    if (f !== 'distance') scheduleGeocode(t, f);
+    if (f !== 'distance') {
+      scheduleGeocode(t, f);
+      t.routeMsg = null;
+    }
     update();
   });
 
@@ -477,8 +495,7 @@ function bind() {
         node.querySelector('[data-f="distance"]').value = t.distance;
         break;
       case 'calc':
-        // Statistiques : une demande de calcul de distance. L'appel à l'API viendra ici.
-        logDistanceCalculation();
+        calculateDistance(t);
         return;
       case 'exclude':
         t.excluded = !t.excluded;
@@ -517,8 +534,48 @@ function bind() {
   setInterval(update, 60_000);
 }
 
+const fmtKm = (km) => `${num(round2(km))} km`;
+
+/** Lieu à envoyer au calcul : coordonnées si l'adresse vient de l'autocomplétion, sinon le texte. */
+function placeForRoute(t, key) {
+  const label = t[key].trim();
+  const g = t.geo[key];
+  return g && g.query === label && Number.isFinite(g.lat) ? { label, lat: g.lat, lon: g.lon } : { label };
+}
+
+/** Bouton « Calculer la distance » : appelle la fonction serveur, remplit la distance. */
+async function calculateDistance(t) {
+  if (t.calculating) return;
+  t.calculating = true;
+  t.routeMsg = null;
+  update();
+  logDistanceCalculation(); // statistiques : une demande de calcul de distance
+  try {
+    const r = await computeRoute(placeForRoute(t, 'origin'), placeForRoute(t, 'destination'));
+    if (!state.trips.includes(t)) return;
+    const index = state.trips.indexOf(t);
+    const detour = round2(r.distanceKm - r.shortest.distanceKm);
+    t.routeMsg = {
+      text:
+        r.reason === 'faster-alternative'
+          ? `Distance calculée : ${fmtKm(r.distanceKm)}. Le plus court (${fmtKm(r.shortest.distanceKm)}) était chargé : itinéraire plus rapide retenu, ${fmtKm(detour)} de plus.`
+          : `Distance calculée : ${fmtKm(r.distanceKm)} (itinéraire le plus court).`,
+    };
+    t.calculating = false;
+    setRouteResult(index, { distanceKm: r.distanceKm, durationMin: r.durationMin });
+  } catch (err) {
+    const text = {
+      not_found: 'Départ ou destination non reconnu : vérifiez l’adresse ou relevez la distance sur Google Maps.',
+      quota: 'Limite mensuelle de calculs atteinte : relevez la distance sur Google Maps.',
+    }[err.code] ?? 'Calcul impossible pour le moment : relevez la distance sur Google Maps.';
+    t.routeMsg = { text, error: true };
+    t.calculating = false;
+    update();
+  }
+}
+
 /**
- * Point d'entrée pour la future API itinéraire : remplit distance et durée d'un trajet
+ * Remplit distance et durée d'un trajet après un calcul d'itinéraire
  * (index à partir de 0) et mémorise la distance pour le bouton ↺.
  */
 function setRouteResult(index, { distanceKm, durationMin }) {

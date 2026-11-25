@@ -51,15 +51,12 @@ export const TASKS = [
 
   // ---------- À faire (prochaine étape) ----------
   { status: 'done', area: 'API itinéraire', title: 'Clé Google Routes API créée et rangée dans les secrets Supabase' },
-  { status: 'todo', area: 'API itinéraire', title: 'Fonction serveur Supabase « route » qui appelle Google Routes (clé non exposée dans le navigateur)' },
-  { status: 'todo', area: 'API itinéraire', title: 'Appel Google Routes : itinéraires alternatifs + trafic à l’heure de départ' },
-  { status: 'todo', area: 'API itinéraire', title: 'Compteur d’appels Google (table api_usage) : bloquer le calcul avant la limite gratuite' },
-  { status: 'todo', area: 'API itinéraire', title: 'Remplir distance et temps de trajet de chaque trajet automatiquement (déjà branché via setRouteResult)' },
-  { status: 'todo', area: 'API itinéraire', title: 'Indiquer à l’utilisateur quand une alternative plus rapide a été retenue' },
-  { status: 'todo', area: 'API itinéraire', title: 'Garder le lien Google Maps et la saisie manuelle en secours si l’API échoue' },
-  { status: 'todo', area: 'API itinéraire', title: 'Activer le bouton « Calculer la distance » (grisé pour l’instant)' },
+  { status: 'done', area: 'API itinéraire', title: 'Fonction serveur « route » : Google Routes (trafic + alternatives), règle du plus court / alternative ≤ +10 km' },
+  { status: 'done', area: 'API itinéraire', title: 'Garde-fou : compteur mensuel Google dans Supabase, calcul bloqué au-delà de 4 500 appels' },
+  { status: 'done', area: 'API itinéraire', title: 'Bouton « Calculer la distance » actif : remplit la distance (modifiable, ↺), indique si un itinéraire plus rapide est retenu' },
+  { status: 'done', area: 'API itinéraire', title: 'Message si départ / destination non reconnu, quota atteint ou erreur, avec repli sur Google Maps' },
   { status: 'todo', area: 'API itinéraire', title: 'Afficher le temps de trajet estimé renvoyé par l’API', note: 'Retiré de l’interface en attendant ; la valeur est déjà prévue dans setRouteResult.' },
-  { status: 'todo', area: 'API itinéraire', title: 'Signaler quand la ville / l’adresse de départ ou de destination n’est pas reconnue', note: 'Message sous le champ concerné, en proposant de corriger la saisie ou de passer par Google Maps.' },
+  { status: 'check', area: 'API itinéraire', title: 'Déployer la fonction « route » dans Supabase et désactiver « Verify JWT » (étapes 8 et 9 de docs/SUPABASE.md)', note: 'Puis tester « Calculer la distance » sur le site en ligne. Testée ici avec des réponses Google simulées.' },
 
   // ---------- Plus tard ----------
   { status: 'later', area: 'Réflexion', title: 'Transformer le site en outil de suivi des courses de taxi ?', note: 'À réfléchir : les chauffeurs ne saisiront pas forcément toutes leurs courses ici.' },
