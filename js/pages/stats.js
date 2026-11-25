@@ -1,5 +1,5 @@
 import { GRANULARITIES } from '../core/periods.js';
-import { estimatesPerPeriod, USING_DEMO_DATA } from '../services/stats.js';
+import { estimatesPerPeriod } from '../services/stats.js';
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => n.toLocaleString('fr-FR');
@@ -33,14 +33,24 @@ function niceTicks(max) {
 }
 
 async function render() {
-  const data = await estimatesPerPeriod(granularity);
   const g = GRANULARITIES[granularity];
   $('chart-caption').textContent = g.caption;
-  $('demo-note').classList.toggle('hidden', !USING_DEMO_DATA);
+  let data;
+  try {
+    data = await estimatesPerPeriod(granularity);
+    $('stats-error').classList.add('hidden');
+  } catch {
+    $('stats-error').classList.remove('hidden');
+    $('stat-row').innerHTML = '';
+    $('chart').innerHTML = '';
+    $('chart-rows').innerHTML = '';
+    return;
+  }
 
   const total = data.reduce((s, d) => s + d.count, 0);
   const current = data[data.length - 1];
   const best = data.reduce((a, b) => (b.count > a.count ? b : a));
+  $('stats-empty').classList.toggle('hidden', total > 0);
   const unit = { day: 'jour', week: 'semaine', month: 'mois', year: 'an' }[granularity];
   $('stat-row').innerHTML = `
     <div><span class="stat-value">${fmt(total)}</span><span class="stat-label">au total</span></div>
@@ -55,7 +65,7 @@ async function render() {
   const bars = data
     .map((d, i) => {
       const h = top ? (d.count / top) * 100 : 0;
-      const labelled = d === current || d === best; // étiquettes sélectives
+      const labelled = d.count > 0 && (d === current || d === best); // étiquettes sélectives
       return `<button type="button" class="chart-col${d.current ? ' is-current' : ''}" data-i="${i}" aria-label="${d.long} : ${fmt(d.count)} estimations">
           <span class="chart-bar" style="height:${h}%">${labelled ? `<span class="chart-value">${fmt(d.count)}</span>` : ''}</span>
           <span class="chart-x">${d.short}</span>

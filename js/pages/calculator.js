@@ -5,6 +5,7 @@ import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
+import { scheduleEstimateLog } from '../services/estimates-log.js';
 import { initInfoButtons } from '../ui/info.js';
 
 const $ = (id) => document.getElementById(id);
@@ -305,6 +306,20 @@ function summaryLabel(params) {
   return bits.join(' · ');
 }
 
+/** Statistiques : signale le prix affiché (enregistré s'il reste stable 3 s). */
+function logEstimate(valid, total) {
+  if (!valid.length) return scheduleEstimateLog(null);
+  const distance = round2(valid.reduce((s, x) => s + x.r.params.distanceKm, 0));
+  const fromApi = valid.every((x) => x.t.apiDistance != null && readKm(x.t.distance) === x.t.apiDistance);
+  scheduleEstimateLog({
+    signature: JSON.stringify(valid.map((x) => x.r.params)),
+    trips_count: valid.length,
+    total_eur: total,
+    distance_km: distance,
+    distance_source: fromApi ? 'api' : 'manual',
+  });
+}
+
 function renderPrice() {
   const results = state.trips.map((t) => ({ t, r: fareOf(t) }));
   const valid = results.filter((x) => x.r && !x.t.excluded);
@@ -321,6 +336,8 @@ function renderPrice() {
   if (excludedCount) notes.push(`${excludedCount} trajet${excludedCount > 1 ? 's' : ''} exclu${excludedCount > 1 ? 's' : ''}`);
   el.priceNote.classList.toggle('hidden', !(multi && valid.length && notes.length));
   el.priceNote.textContent = notes.length ? `Non compté${missing + excludedCount > 1 ? 's' : ''} : ${notes.join(', ')}.` : '';
+
+  logEstimate(valid, total);
 
   if (!valid.length) {
     el.priceList.innerHTML = '<p class="empty-state">Indiquez la distance pour obtenir le prix.</p>';
