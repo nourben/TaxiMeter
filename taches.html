@@ -13,10 +13,12 @@
   </head>
   <body>
     <header id="site-header"></header>
-    <main>
-      <h1 class="page-title">Suivi du projet</h1>
-      <p class="muted small" id="progress" style="margin:-8px 0 14px"></p>
-      <div id="tasks"></div>
+    <main class="main-wide">
+      <div class="board-head">
+        <h1 class="page-title">Suivi du projet</h1>
+        <p class="muted small" id="progress"></p>
+      </div>
+      <div class="board" id="tasks" tabindex="0" aria-label="Tableau des tâches, défilable horizontalement"></div>
     </main>
     <footer id="site-footer"></footer>
     <script type="module" src="js/ui/layout.js"></script>

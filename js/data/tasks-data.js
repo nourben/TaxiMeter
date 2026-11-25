@@ -4,9 +4,9 @@
 export const STATUSES = [
   { key: 'check', label: 'Erreurs à vérifier', description: 'Incohérences relevées dans les exemples de tarifs fournis', open: true },
   { key: 'validate', label: 'À valider', description: 'Points à confirmer avant d’aller plus loin', open: true },
-  { key: 'todo', label: 'À faire — prochaine étape', description: 'Une fois l’interface validée', open: true },
+  { key: 'todo', label: 'À faire', description: 'Une fois l’interface validée', open: true },
   { key: 'later', label: 'Plus tard', description: 'Dépend d’un compte ou d’une décision à venir', open: false },
-  { key: 'done', label: 'Fait', description: 'Livré dans le premier jet', open: false },
+  { key: 'done', label: 'Fait', description: 'Livré', open: false },
 ];
 
 export const TASKS = [

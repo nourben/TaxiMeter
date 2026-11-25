@@ -676,80 +676,125 @@ input:focus {
   text-align: right;
 }
 
-/* Tâches */
-.task-group {
-  margin-bottom: 14px;
+/* Tâches — tableau façon Trello */
+main.main-wide {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
 }
-.task-group summary {
-  cursor: pointer;
-  list-style: none;
+.board-head {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 14px;
+}
+.board-head .page-title {
+  margin-bottom: 2px;
+}
+.board-head p {
+  margin: 0 0 12px;
+}
+.board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 14px;
+  padding: 2px 14px 16px;
+  align-items: flex-start;
+}
+/* Centré quand tout tient à l'écran, sans couper la 1re colonne sinon */
+.board > .column:first-child {
+  margin-left: auto;
+}
+.board > .column:last-child {
+  margin-right: auto;
+}
+.column {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 10px;
+  border-top: 4px solid var(--border);
+  max-height: calc(100vh - 190px);
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 1100px) {
+  .scroll-hint {
+    display: none;
+  }
+  .column {
+    flex: 1 1 240px;
+    max-width: 320px;
+  }
+}
+.status-check.column { border-top-color: var(--danger); }
+.status-validate.column { border-top-color: var(--accent); }
+.status-todo.column { border-top-color: var(--focus); }
+.status-later.column { border-top-color: var(--text-muted); }
+.status-done.column { border-top-color: var(--success); }
+.column-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-weight: 700;
+  padding: 2px 4px;
 }
-.task-group summary::-webkit-details-marker {
-  display: none;
+.column-head h2 {
+  font-size: 0.95rem;
 }
-.task-group summary::after {
-  content: '▾';
+.column-head .badge {
+  background: var(--surface);
+}
+.column-desc {
+  margin: 2px 4px 8px;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  transition: transform 0.15s;
 }
-.task-group:not([open]) summary::after {
-  transform: rotate(-90deg);
-}
-.task-group .count {
-  margin-left: auto;
-}
-.task-list {
+.column-cards {
   list-style: none;
-  margin: 12px 0 0;
+  margin: 0;
   padding: 0;
-}
-.task-list li {
   display: flex;
-  gap: 10px;
-  padding: 9px 0;
-  border-top: 1px solid var(--border);
-  font-size: 0.92rem;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
 }
-.task-list .dot {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  display: grid;
-  place-items: center;
-  font-size: 0.65rem;
+.task-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.06);
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
-.status-done .dot {
-  background: var(--success);
-  border-color: var(--success);
-  color: #fff;
-}
-.status-check .dot {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-.status-validate .dot {
-  border-color: var(--accent);
-}
-.task-list .area {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  font-weight: 600;
+.task-card .area {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 3px;
 }
-.task-list .note {
+.task-card .task-title {
   display: block;
+}
+.task-card .note {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.77rem;
+  color: var(--text-muted);
+}
+.status-done .task-title {
+  color: var(--text-muted);
+}
+.column-empty {
   font-size: 0.8rem;
   color: var(--text-muted);
+  padding: 6px 4px;
 }
 
 /* ============ Trajets ============ */
