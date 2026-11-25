@@ -37,15 +37,14 @@ export const TARIFS = {
     nuit: { label: 'Nuit', startHour: 20, multiplier: 1.5, appliesTo: 'total' },
   },
 
-  /** Supplément Métropole (cumulable avec jour ou nuit) */
+  /**
+   * Supplément Métropole = forfait « grande ville » de la convention-cadre taxis :
+   * prise en charge et/ou dépose à Paris, dans une commune du 92, 93 ou 94, ou dans une grande ville listée.
+   */
   metropole: {
     supplement: 15,
-    /** Centre de référence : Paris (parvis Notre-Dame) */
-    center: { lat: 48.853, lon: 2.3499, label: 'Paris (Notre-Dame)' },
-    /** Rayon à vol d'oiseau ≈ distance Paris – Créteil */
-    radiusKm: 11,
-    /** Départements de la petite couronne (+ Paris), utilisés via le code postal */
     departments: ['75', '92', '93', '94'],
+    cities: ['Paris', 'Marseille', 'Nice', 'Toulouse', 'Lyon', 'Strasbourg', 'Montpellier', 'Rennes', 'Bordeaux', 'Lille', 'Grenoble', 'Nantes'],
   },
 };
 
