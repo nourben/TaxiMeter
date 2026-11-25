@@ -21,7 +21,7 @@ root.innerHTML = STATUSES.map((s) => {
           .map(
             (t) => `
           <li>
-            <span class="dot" aria-hidden="true">${s.key === 'done' ? '✓' : ''}</span>
+            <span class="dot" aria-hidden="true">${s.key === 'done' ? '✓' : s.key === 'check' ? '!' : ''}</span>
             <span>
               <span class="area">${esc(t.area)}</span>
               ${esc(t.title)}

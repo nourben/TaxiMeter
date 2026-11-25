@@ -1,6 +1,14 @@
 # TaxiMeter
 
-Site statique (HTML/CSS/JS sans framework, sans build) pour estimer le prix d'une course de taxi.
+**🌐 Site en ligne : https://nourben.github.io/TaxiMeter/**
+
+Estimation du prix d'une course de taxi : distance (saisie ou relevée sur Google Maps), tarif jour/nuit automatique,
+supplément Métropole, choix du tarif kilométrique, 2e course en parallèle, historique et statistiques.
+
+Site statique (HTML/CSS/JS sans framework, sans build), publié par GitHub Pages depuis la branche `main`.
+
+- Suivi du projet (fait / à faire / à vérifier) : [page Tâches](https://nourben.github.io/TaxiMeter/taches.html)
+- Statut : premier jet de l'interface — API itinéraire et base Supabase à venir
 
 ## Lancer en local
 

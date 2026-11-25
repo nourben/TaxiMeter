@@ -727,6 +727,10 @@ input:focus {
   border-color: var(--success);
   color: #fff;
 }
+.status-check .dot {
+  border-color: var(--danger);
+  color: var(--danger);
+}
 .status-validate .dot {
   border-color: var(--accent);
 }

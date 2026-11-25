@@ -1,7 +1,8 @@
 // Suivi du projet — modifier ce fichier pour mettre à jour la page « Tâches ».
-// status : 'done' (fait) · 'validate' (à valider) · 'todo' (à faire, prochaine étape) · 'later' (plus tard)
+// status : 'check' (erreur à vérifier) · 'done' (fait) · 'validate' (à valider) · 'todo' (à faire, prochaine étape) · 'later' (plus tard)
 
 export const STATUSES = [
+  { key: 'check', label: 'Erreurs à vérifier', description: 'Incohérences relevées dans les exemples de tarifs fournis', open: true },
   { key: 'validate', label: 'À valider', description: 'Points à confirmer avant d’aller plus loin', open: true },
   { key: 'todo', label: 'À faire — prochaine étape', description: 'Une fois l’interface validée', open: true },
   { key: 'later', label: 'Plus tard', description: 'Dépend d’un compte ou d’une décision à venir', open: false },
@@ -31,8 +32,8 @@ export const TASKS = [
   { status: 'done', area: 'API itinéraire', title: 'Squelette de la couche d’abstraction fournisseurs (Google → TomTom)' },
 
   // ---------- À valider ----------
-  { status: 'validate', area: 'Tarifs', title: 'Coefficient jour : appliqué à la distance seule ?', note: 'Votre exemple de jour donne 13 + 19,20 × 1,25 = 37,00 € (coefficient sur la distance), alors que celui de nuit donne (13 + 19,20) × 1,5 = 48,30 € (coefficient sur le total). Le site reproduit les deux exemples tels quels ; un seul paramètre à changer si c’est une erreur.' },
-  { status: 'validate', area: 'Tarifs', title: 'Métropole seule = 47,20 € dans l’exemple', note: 'Ce montant correspond à 32,20 + 15 € sans coefficient jour ni nuit. Le site applique toujours jour OU nuit, donc Métropole + jour 20 km = 52,00 € et Métropole + nuit = 63,30 €.' },
+  { status: 'check', area: 'Tarifs', title: 'Exemples jour / nuit : le coefficient ne s’applique pas au même montant', note: 'Votre exemple de jour donne 13 + 19,20 × 1,25 = 37,00 € (coefficient sur la distance), alors que celui de nuit donne (13 + 19,20) × 1,5 = 48,30 € (coefficient sur le total). Le site reproduit les deux exemples tels quels ; un seul paramètre à changer si c’est une erreur.' },
+  { status: 'check', area: 'Tarifs', title: 'Exemple Métropole à 47,20 € calculé sans tarif de jour ni de nuit', note: 'Ce montant correspond à 32,20 + 15 € sans coefficient jour ni nuit. Le site applique toujours jour OU nuit, donc Métropole + jour 20 km = 52,00 € et Métropole + nuit = 63,30 €.' },
   { status: 'validate', area: 'Tarifs', title: 'Zone Métropole : rayon de 11 km autour de Notre-Dame + codes postaux 75/92/93/94', note: 'Paris – Créteil ≈ 10,4 km à vol d’oiseau. Certaines communes de petite couronne dépassent 11 km mais sont incluses par leur code postal.' },
   { status: 'validate', area: 'Tarifs', title: 'Changement d’horaire pendant la course', note: 'Aujourd’hui seul l’horaire de départ compte (ex. départ 19 h 50 = tarif de jour).' },
   { status: 'validate', area: 'Tarifs', title: '2e course : prix plein pour chaque client ou réduction ?', note: 'Actuellement chaque course est calculée séparément au tarif normal.' },
