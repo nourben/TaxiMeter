@@ -10,9 +10,10 @@ export const TARIFS = {
   /** Kilomètres inclus dans la prise en charge */
   includedKm: 4,
 
-  /** Tarifs kilométriques proposés (€/km) — le premier est la valeur par défaut */
-  ratesPerKm: [1.2, 1.22, 1.07],
-  defaultRatePerKm: 1.2,
+  /** Tarifs kilométriques proposés (€/km), selon le département de la licence — le premier est la valeur par défaut
+   *  (convention-cadre : 1,07 € notamment en 77, 78, 91, 92, 93, 94, 95 ; 1,22 € à Paris) */
+  ratesPerKm: [1.07, 1.2, 1.22],
+  defaultRatePerKm: 1.07,
 
   /**
    * Périodes tarifaires. C'est soit jour, soit nuit (jamais les deux).
