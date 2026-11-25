@@ -26,7 +26,7 @@ npm test             # tests du calcul tarifaire et du choix d'itinéraire
 |---|---|
 | `js/config/tarifs.js` | **Toute la grille tarifaire** (prise en charge, km inclus, coefficients, horaires, Métropole) et les règles d'itinéraire |
 | `js/core/` | Logique pure, testée : `pricing.js`, `period.js` (jour/nuit), `metropole.js`, `route-selection.js` |
-| `js/services/` | Lien Google Maps, géocodage (IGN, gratuit), stockage (localStorage → Supabase), squelette `routing/` |
+| `js/services/` | Lien Google Maps, géocodage et autocomplétion (IGN, gratuit), Supabase (statistiques) |
 | `js/ui/` | En-tête/pied de page/thème, infos contextuelles |
 | `js/pages/` | Script de chaque page |
 | `js/data/tasks-data.js` | Contenu de la page « Tâches » |

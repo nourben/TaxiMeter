@@ -75,11 +75,11 @@ revoke all on function public.estimates_per_period(text, int) from public;
 grant execute on function public.estimates_per_period(text, int) to anon;
 
 -- ─────────────────────────────────────────────────────────────
--- 3. Compteur d'appels aux API itinéraire (bascule Google → TomTom)
+-- 3. Compteur d'appels à l'API itinéraire (Google), pour bloquer avant la limite gratuite
 --    Utilisé uniquement par la fonction serveur « route » (clé service_role).
 -- ─────────────────────────────────────────────────────────────
 create table if not exists public.api_usage (
-  provider text not null check (provider in ('google', 'tomtom')),
+  provider text not null check (provider in ('google')),
   month    date not null,
   calls    integer not null default 0,
   primary key (provider, month)
