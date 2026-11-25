@@ -41,6 +41,7 @@ function newTrip() {
     period: null,
     metropole: null,
     rate: TARIFS.defaultRatePerKm,
+    excluded: false,
     geo: { origin: null, destination: null },
   };
 }
@@ -94,47 +95,62 @@ function fareOf(t) {
 
 const PIN =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const ICON_DAY =
+  '<svg class="period-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="3.2"/><path d="M12 5.5v1.6M12 16.9v1.6M5.5 12h1.6M16.9 12h1.6M7.4 7.4l1.1 1.1M15.5 15.5l1.1 1.1M7.4 16.6l1.1-1.1M15.5 8.5l1.1-1.1"/></svg>';
+const ICON_NIGHT =
+  '<svg class="period-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M14.8 6.6a5.6 5.6 0 1 0 2.6 9.6 4.6 4.6 0 0 1-2.6-9.6z"/></svg>';
 
 function tripTemplate(t) {
   const rates = TARIFS.ratesPerKm
     .map((r) => {
       const id = `rate-${t.id}-${String(r).replace('.', '')}`;
       const nd = r === TARIFS.defaultRatePerKm ? '' : ' class="nondefault"';
-      return `<input type="radio" name="rate-${t.id}" id="${id}" value="${r}" data-f="rate"${nd} /><label for="${id}">${num(r.toFixed(2))}</label>`;
+      return `<input type="radio" name="rate-${t.id}" id="${id}" value="${r}" data-f="rate"${nd} /><label for="${id}">${num(r.toFixed(2))} €</label>`;
     })
     .join('');
   return `
     <div class="trip-head">
       <span class="trip-title" data-o="title"></span>
       <span class="trip-price" data-o="price"></span>
-      <button type="button" class="link-btn" data-a="remove">Retirer</button>
-    </div>
-    <div class="route">
-      <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ (adresse ou ville)" aria-label="Départ" enterkeyhint="next" /></div>
-      <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination" enterkeyhint="next" /></div>
-    </div>
-    <div class="trip-row">
-      <div class="km-field">
-        <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
-        <span class="suffix">km</span>
+      <div class="trip-actions">
+        <button type="button" class="link-btn" data-a="exclude"></button>
+        <button type="button" class="link-btn danger-link" data-a="remove">Supprimer ce trajet</button>
       </div>
-      <button type="button" class="btn reset-btn hidden" data-a="reset-km" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
-      <a class="maps-link" data-o="maps" target="_blank" rel="noopener">${PIN}Google Maps</a>
     </div>
-    <div class="trip-meta">
-      <span>Temps de trajet estimé : <strong data-o="duration">—</strong></span>
-      <button type="button" class="link-btn" data-a="same-km">Même km que le trajet 1</button>
-    </div>
-    <div class="opts">
-      <div class="segmented seg-sm" role="radiogroup" aria-label="Horaire">
-        <input type="radio" name="period-${t.id}" id="p-${t.id}-jour" value="jour" data-f="period" /><label for="p-${t.id}-jour">☀︎ Jour</label>
-        <input type="radio" name="period-${t.id}" id="p-${t.id}-nuit" value="nuit" data-f="period" /><label for="p-${t.id}-nuit">☾ Nuit</label>
+    <div class="trip-body">
+      <div class="route">
+        <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ (adresse ou ville)" aria-label="Départ" enterkeyhint="next" /></div>
+        <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination" enterkeyhint="next" /></div>
       </div>
-      <button type="button" class="chip" data-a="metro" aria-pressed="false">Métropole</button>
-      <div class="segmented seg-sm" role="radiogroup" aria-label="Tarif kilométrique en euros">${rates}</div>
-      <button class="info-btn" data-info="options" aria-label="Aide sur les options du trajet">i</button>
-    </div>
-    <p class="trip-hint" data-o="hint"></p>`;
+      <a class="btn maps-btn" data-o="maps" target="_blank" rel="noopener">
+        ${PIN}
+        <span><strong>Voir le trajet sur Google Maps</strong><small>pour relever la distance en km</small></span>
+      </a>
+      <div class="trip-row">
+        <div class="km-field">
+          <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
+          <span class="suffix">km</span>
+        </div>
+        <button type="button" class="btn reset-btn hidden" data-a="reset-km" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
+        <button type="button" class="link-btn same-km" data-a="same-km">Même km que le trajet 1</button>
+      </div>
+      <div class="trip-meta">
+        Temps de trajet estimé : <strong data-o="duration">—</strong>
+        <span class="soon" data-o="soon" title="Le temps de trajet et la distance seront calculés automatiquement quand le calcul d’itinéraire sera branché">calcul auto à venir</span>
+      </div>
+      <div class="opts">
+        <button class="info-btn opts-info" data-info="options" aria-label="Aide sur les options du trajet">i</button>
+        <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Horaire">
+          <input type="radio" name="period-${t.id}" id="p-${t.id}-jour" value="jour" data-f="period" /><label for="p-${t.id}-jour">${ICON_DAY} Jour</label>
+          <input type="radio" name="period-${t.id}" id="p-${t.id}-nuit" value="nuit" data-f="period" /><label for="p-${t.id}-nuit">${ICON_NIGHT} Nuit</label>
+        </div>
+        <button type="button" class="chip opt-wide" data-a="metro" aria-pressed="false">Métropole</button>
+        <p class="trip-hint" data-o="hint-period"></p>
+        <p class="trip-hint" data-o="hint-metro"></p>
+        <div class="segmented seg-sm opt-wide opt-rate" role="radiogroup" aria-label="Tarif kilométrique">${rates}</div>
+        <p class="trip-hint hidden" data-o="hint-rate"></p>
+      </div>
+    </div>`;
 }
 
 function tripNode(t) {
@@ -159,9 +175,13 @@ function updateTrip(t, index, count) {
 
   node.querySelector('.trip-head').classList.toggle('hidden', !multi);
   o('title').textContent = `Trajet ${index + 1}`;
-  node.querySelector('[data-a="remove"]').classList.toggle('hidden', index === 0);
+  node.querySelector('.trip-actions').classList.toggle('hidden', index === 0);
+  const excludeBtn = node.querySelector('[data-a="exclude"]');
+  excludeBtn.textContent = t.excluded ? 'Inclure dans le prix' : 'Exclure du prix';
+  excludeBtn.setAttribute('aria-pressed', String(!!t.excluded));
+  node.classList.toggle('excluded', !!t.excluded);
   const r = fareOf(t);
-  o('price').textContent = r ? formatEuro(r.fare.total) : '';
+  o('price').textContent = t.excluded ? 'exclu' : r ? formatEuro(r.fare.total) : '';
 
   // Distance : bouton ↺ seulement si l'API a donné une valeur et qu'elle a été modifiée
   const km = readKm(t.distance);
@@ -172,6 +192,7 @@ function updateTrip(t, index, count) {
   sameKm.classList.toggle('hidden', index === 0 || firstKm == null || firstKm === km);
 
   o('duration').textContent = t.apiDuration != null ? formatDuration(t.apiDuration) : '—';
+  o('soon').classList.toggle('hidden', t.apiDuration != null);
 
   const maps = o('maps');
   if (t.origin.trim() && t.destination.trim()) {
@@ -188,25 +209,32 @@ function updateTrip(t, index, count) {
   const metro = effectiveMetro(t);
   const chip = node.querySelector('[data-a="metro"]');
   chip.setAttribute('aria-pressed', String(metro));
-  chip.textContent = metro ? '✓ Métropole' : 'Métropole';
+  chip.textContent = metro ? `✓ Métropole (+${num(TARIFS.metropole.supplement)} €)` : 'Métropole';
   for (const radio of node.querySelectorAll('[data-f="rate"]')) radio.checked = Number(radio.value) === t.rate;
 
-  // Ligne d'état : auto ou manuel
   const p = TARIFS.periods;
-  const parts = [];
-  parts.push(
+  o('hint-period').innerHTML =
     t.period == null
       ? `Horaire auto : ${period === 'jour' ? `jour (${p.jour.startHour} h–${p.nuit.startHour} h)` : `nuit (${p.nuit.startHour} h–${p.jour.startHour} h)`}`
-      : `Horaire choisi : ${period} · <button type="button" class="link-btn" data-a="period-auto">auto</button>`,
-  );
+      : `Horaire choisi : ${period} · <button type="button" class="link-btn" data-a="period-auto">repasser en auto</button>`;
+
+  let metroText;
   if (t.metropole == null) {
     const det = detectMetro(t);
-    if (det.inZone) parts.push(`Métropole détectée (${esc(det.reason)})`);
+    if (det.inZone) metroText = `Métropole auto : détectée (${esc(det.reason)})`;
+    else if (t.origin.trim() || t.destination.trim()) metroText = 'Métropole auto : non détectée';
+    else metroText = 'Métropole auto : selon le départ et la destination';
   } else {
-    parts.push(`Métropole ${t.metropole ? 'ajoutée' : 'retirée'} à la main · <button type="button" class="link-btn" data-a="metro-auto">auto</button>`);
+    metroText = `Métropole ${t.metropole ? 'ajoutée' : 'retirée'} à la main · <button type="button" class="link-btn" data-a="metro-auto">repasser en auto</button>`;
   }
-  if (t.rate !== TARIFS.defaultRatePerKm) parts.push(`<span class="warn-text">Tarif ${num(t.rate.toFixed(2))} €/km</span>`);
-  o('hint').innerHTML = parts.join(' · ');
+  o('hint-metro').innerHTML = metroText;
+
+  const rateHint = o('hint-rate');
+  const nonDefault = t.rate !== TARIFS.defaultRatePerKm;
+  rateHint.classList.toggle('hidden', !nonDefault);
+  rateHint.innerHTML = nonDefault
+    ? `<span class="warn-text">Tarif ${num(t.rate.toFixed(2))} €/km au lieu de ${num(TARIFS.defaultRatePerKm.toFixed(2))} €</span>`
+    : '';
 }
 
 function formatDuration(min) {
@@ -236,16 +264,20 @@ function summaryLabel(params) {
 
 function renderPrice() {
   const results = state.trips.map((t) => ({ t, r: fareOf(t) }));
-  const valid = results.filter((x) => x.r);
+  const valid = results.filter((x) => x.r && !x.t.excluded);
   const multi = state.trips.length > 1;
 
   el.priceTitle.textContent = multi ? 'Prix total' : 'Prix estimé';
   const total = round2(valid.reduce((s, x) => s + x.r.fare.total, 0));
   el.priceTotal.textContent = valid.length ? formatEuro(total) : '—';
 
-  const missing = results.length - valid.length;
-  el.priceNote.classList.toggle('hidden', !(multi && valid.length && missing));
-  el.priceNote.textContent = missing ? `${missing} trajet${missing > 1 ? 's' : ''} sans distance, non compté${missing > 1 ? 's' : ''}.` : '';
+  const excludedCount = results.filter((x) => x.t.excluded).length;
+  const missing = results.filter((x) => !x.r && !x.t.excluded).length;
+  const notes = [];
+  if (missing) notes.push(`${missing} trajet${missing > 1 ? 's' : ''} sans distance`);
+  if (excludedCount) notes.push(`${excludedCount} trajet${excludedCount > 1 ? 's' : ''} exclu${excludedCount > 1 ? 's' : ''}`);
+  el.priceNote.classList.toggle('hidden', !(multi && valid.length && notes.length));
+  el.priceNote.textContent = notes.length ? `Non compté${missing + excludedCount > 1 ? 's' : ''} : ${notes.join(', ')}.` : '';
 
   if (!valid.length) {
     el.priceList.innerHTML = '<p class="empty-state">Indiquez la distance pour obtenir le prix.</p>';
@@ -260,6 +292,7 @@ function renderPrice() {
 
   el.priceList.innerHTML = results
     .map(({ t, r }, i) => {
+      if (t.excluded) return `<div class="fare-row muted"><span>Trajet ${i + 1}</span><span>exclu</span></div>`;
       if (!r) return `<div class="fare-row muted"><span>Trajet ${i + 1}</span><span>—</span></div>`;
       const open = state.openFares.has(t.id) ? ' open' : '';
       return `<details class="fare" data-id="${t.id}"${open}>
@@ -361,7 +394,7 @@ function bind() {
 
   el.trips.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-a]');
-    const maps = e.target.closest('.maps-link');
+    const maps = e.target.closest('.maps-btn');
     if (maps && maps.getAttribute('aria-disabled') === 'true') {
       e.preventDefault();
       toast('Renseignez le départ et la destination');
@@ -382,6 +415,9 @@ function bind() {
       case 'same-km':
         t.distance = state.trips[0].distance;
         node.querySelector('[data-f="distance"]').value = t.distance;
+        break;
+      case 'exclude':
+        t.excluded = !t.excluded;
         break;
       case 'metro':
         t.metropole = !effectiveMetro(t);

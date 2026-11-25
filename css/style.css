@@ -799,15 +799,33 @@ main.main-wide {
 
 /* ============ Trajets ============ */
 .trip + .trip {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--border);
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 3px solid var(--border);
 }
 .trip-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 4px 8px;
+  margin-bottom: 10px;
+}
+.trip-actions {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.danger-link {
+  color: var(--danger);
+}
+.trip.excluded .trip-body {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+.trip.excluded .trip-price {
+  color: var(--text-muted);
+  font-weight: 600;
 }
 .trip-title {
   font-weight: 700;
@@ -881,32 +899,49 @@ main.main-wide {
   font-size: 0.85rem;
   pointer-events: none;
 }
-.maps-link {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-  text-underline-offset: 3px;
-  cursor: pointer;
+.maps-btn {
+  display: flex;
+  width: min(100%, 375px);
+  margin: 10px auto 0;
+  gap: 10px;
+  padding: 9px 14px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  border-color: var(--accent);
+  text-align: left;
 }
-.maps-link svg {
-  width: 15px;
-  height: 15px;
+.maps-btn:hover {
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface));
 }
-.maps-link[aria-disabled='true'] {
+.maps-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.maps-btn span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.maps-btn strong {
+  font-size: 0.92rem;
+}
+.maps-btn small {
+  font-weight: 500;
+  font-size: 0.76rem;
   color: var(--text-muted);
-  opacity: 0.6;
-  text-decoration: none;
 }
-
+.maps-btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.same-km {
+  margin-left: auto;
+}
 .trip-meta {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 4px 12px;
+  align-items: center;
+  gap: 4px 6px;
   margin-top: 6px;
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -916,21 +951,53 @@ main.main-wide {
   font-weight: 600;
 }
 
+.soon {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+}
+
 .opts {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 12px;
+}
+.opt-wide {
+  width: min(100% - 32px, 375px);
+}
+.opts-info {
+  position: absolute;
+  top: 8px;
+  right: 0;
 }
 .segmented.seg-sm {
   padding: 3px;
   gap: 2px;
 }
 .segmented.seg-sm label {
-  flex: none;
-  padding: 6px 10px;
-  font-size: 0.84rem;
+  padding: 7px 10px;
+  font-size: 0.86rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.opt-wide.segmented label {
+  flex: 1;
+}
+.period-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+.opt-rate {
+  margin-top: 10px;
 }
 .segmented input.nondefault:checked + label {
   background: var(--warn-bg);
@@ -938,9 +1005,10 @@ main.main-wide {
 }
 .chip {
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  padding: 7px 12px;
+  padding: 9px 12px;
+  text-align: center;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -952,14 +1020,11 @@ main.main-wide {
   border-color: var(--accent);
   color: var(--text);
 }
-.opts .info-btn {
-  margin-left: auto;
-}
 .opts + .info-panel {
   margin-top: 8px;
 }
 .trip-hint {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 0.78rem;
   color: var(--text-muted);
 }
