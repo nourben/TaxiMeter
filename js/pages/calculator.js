@@ -149,7 +149,6 @@ function tripTemplate(t) {
         <span class="suffix">km</span>
       </div>
       <div class="trip-meta opt-side">
-        Temps de trajet estimé : <strong data-o="duration">—</strong>
         <button type="button" class="link-btn same-km" data-a="same-km">Même km que le trajet 1</button>
       </div>
       </div>
@@ -234,7 +233,6 @@ function updateTrip(t, index, count) {
   const firstKm = readKm(state.trips[0].distance);
   sameKm.classList.toggle('hidden', index === 0 || firstKm == null || firstKm === km);
 
-  o('duration').textContent = t.apiDuration != null ? formatDuration(t.apiDuration) : '—';
 
   const maps = o('maps');
   if (t.origin.trim() && t.destination.trim()) {
