@@ -2,3 +2,6 @@
 # Les nouvelles clés « publishable » ne sont pas des JWT : la vérification JWT doit être désactivée.
 [functions.route]
 verify_jwt = false
+
+[functions.contact]
+verify_jwt = false

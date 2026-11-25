@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contact — TaxiMeter</title>
+    <meta name="theme-color" content="#f5b400" />
+    <script>
+      try { if (localStorage.getItem('taximeter.theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23f5b400'/><text x='16' y='21' font-family='Arial' font-size='12' font-weight='800' text-anchor='middle' fill='%231b1b1f'>TX</text></svg>" />
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main>
+      <h1 class="page-title">Contact</h1>
+
+      <form class="card contact-form" id="contact-form" novalidate>
+        <p class="muted small" style="margin-top:0">Une question, une erreur de calcul, une idée ? Laissez un moyen de vous recontacter : rien d’autre n’est demandé.</p>
+
+        <div class="field">
+          <label for="c-name">Nom <span class="muted">(facultatif)</span></label>
+          <input type="text" id="c-name" name="name" maxlength="100" autocomplete="name" />
+        </div>
+
+        <fieldset class="field contact-way">
+          <legend class="label">Pour vous répondre <span class="muted">(e-mail ou téléphone, l’un des deux)</span></legend>
+          <div class="grid-2">
+            <input type="email" id="c-email" name="email" maxlength="200" placeholder="E-mail" aria-label="E-mail" autocomplete="email" inputmode="email" />
+            <input type="tel" id="c-phone" name="phone" maxlength="30" placeholder="Téléphone" aria-label="Téléphone" autocomplete="tel" />
+          </div>
+        </fieldset>
+
+        <div class="field">
+          <label for="c-subject">Sujet</label>
+          <input type="text" id="c-subject" name="subject" maxlength="150" list="c-subjects" required />
+          <datalist id="c-subjects">
+            <option value="Question sur un tarif"></option>
+            <option value="Erreur de calcul"></option>
+            <option value="Suggestion"></option>
+            <option value="Autre"></option>
+          </datalist>
+        </div>
+
+        <div class="field">
+          <label for="c-message">Message</label>
+          <textarea id="c-message" name="message" rows="6" maxlength="5000" required></textarea>
+        </div>
+
+        <div class="field">
+          <label for="c-file">Pièce jointe <span class="muted">(facultatif : PDF ou image, 5 Mo max.)</span></label>
+          <input type="file" id="c-file" name="attachment" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif" />
+        </div>
+
+        <!-- Piège à robots : champ invisible pour un humain -->
+        <div class="hp" aria-hidden="true">
+          <label for="c-website">Site web</label>
+          <input type="text" id="c-website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+        <input type="hidden" name="started_at" id="c-started" />
+        <div id="c-turnstile" class="field hidden"></div>
+
+        <p class="form-msg hidden" id="c-msg" role="status"></p>
+        <button type="submit" class="btn btn-primary btn-block" id="c-submit">Envoyer</button>
+        <p class="hint" style="text-align:center">Vos coordonnées servent uniquement à vous répondre.</p>
+      </form>
+    </main>
+    <footer id="site-footer"></footer>
+    <script type="module" src="js/ui/layout.js"></script>
+    <script type="module" src="js/pages/contact.js"></script>
+  </body>
+</html>

@@ -4,3 +4,7 @@
 // Les clés secrètes (Google, service_role) ne vont JAMAIS ici.
 export const SUPABASE_URL = 'https://sthsedzqvnxxhdgswuyi.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Aml0pyf63bGyDL0lQJjiKA_1zYP9ZGx';
+
+// Cloudflare Turnstile (anti-robot du formulaire de contact) : clé de site PUBLIQUE.
+// Laisser vide pour désactiver ; la clé secrète correspondante va dans les secrets Supabase (TURNSTILE_SECRET).
+export const TURNSTILE_SITE_KEY = '';

@@ -1489,3 +1489,80 @@ input:focus {
     padding: 0;
   }
 }
+
+/* Formulaire de contact */
+.contact-form .field {
+  margin-bottom: 14px;
+}
+.contact-form label {
+  display: block;
+  margin-bottom: 6px;
+}
+.contact-way {
+  border: 0;
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+.contact-way legend {
+  display: block;
+  margin-bottom: 6px;
+  padding: 0;
+}
+.contact-form textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 130px;
+}
+.contact-form textarea:focus {
+  border-color: var(--focus);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent);
+}
+.contact-form input[type='file'] {
+  width: 100%;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+.contact-form input[type='email'],
+.contact-form input[type='tel'] {
+  width: 100%;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  min-height: 42px;
+}
+.hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.form-msg {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+}
+.form-msg.is-ok {
+  background: color-mix(in srgb, var(--success) 14%, var(--surface));
+}
+.form-msg.is-error {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+}
+.form-msg.hidden {
+  display: none;
+}

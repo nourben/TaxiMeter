@@ -11,6 +11,7 @@ const FOOTER_LINKS = [
   { href: 'stats.html', label: 'Statistiques' },
   { href: 'cgv.html', label: 'CGV' },
   { href: 'mentions-legales.html', label: 'Mentions légales' },
+  { href: 'contact.html', label: 'Contact' },
 ];
 
 function currentTheme() {
