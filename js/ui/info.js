@@ -21,9 +21,6 @@ export const INFO_CONTENT = {
   metropole: `
     <p>+ ${n(t.metropole.supplement)} €, cumulable avec jour ou nuit.</p>
     <p>Auto si le départ ou la destination est à moins de ${t.metropole.radiusKm} km à vol d’oiseau du centre de Paris (≈ Paris – Créteil) ou en ${t.metropole.departments.join(', ')}. Modifiable à la main.</p>`,
-  tarifKm: `
-    <p>Prix par km au-delà des ${t.includedKm} km inclus : ${t.ratesPerKm.map((r) => `${n(r.toFixed(2))} €`).join(' · ')}.</p>
-    <p>${n(t.defaultRatePerKm.toFixed(2))} € par défaut ; les autres s’affichent en couleur pour éviter une erreur.</p>`,
 };
 
 let counter = 0;

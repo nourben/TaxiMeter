@@ -150,7 +150,6 @@ function tripTemplate(t) {
       </div>
       <div class="trip-meta opt-side">
         Temps de trajet estimé : <strong data-o="duration">—</strong>
-        <span class="soon" data-o="soon" title="Le temps de trajet et la distance seront calculés automatiquement quand le calcul d’itinéraire sera branché">calcul auto à venir</span>
         <button type="button" class="link-btn same-km" data-a="same-km">Même km que le trajet 1</button>
       </div>
       </div>
@@ -161,16 +160,15 @@ function tripTemplate(t) {
             <input type="radio" name="period-${t.id}" id="p-${t.id}-nuit" value="nuit" data-f="period" /><label for="p-${t.id}-nuit">${ICON_NIGHT} Nuit</label>
           </div>
           <button class="info-btn" data-info="horaire" aria-label="Aide sur les horaires jour et nuit">i</button>
-          <p class="trip-hint opt-side" data-o="hint-period"></p>
+          <button type="button" class="link-btn auto-link hidden" data-a="period-auto" data-o="period-auto">repasser en auto</button>
         </div>
         <div class="opt-row opt-metro">
           <button type="button" class="chip opt-wide" data-a="metro" aria-pressed="false">Métropole</button>
           <button class="info-btn" data-info="metropole" aria-label="Aide sur la zone Métropole">i</button>
-          <p class="trip-hint opt-side" data-o="hint-metro"></p>
+          <button type="button" class="link-btn auto-link hidden" data-a="metro-auto" data-o="metro-auto">repasser en auto</button>
         </div>
         <div class="opt-row opt-rate">
           <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Tarif kilométrique">${rates}</div>
-          <button class="info-btn" data-info="tarifKm" aria-label="Aide sur le tarif kilométrique">i</button>
           <p class="trip-hint opt-side hidden" data-o="hint-rate"></p>
         </div>
       </div>
@@ -189,6 +187,14 @@ function mountTrip(t) {
   for (const f of ['origin', 'destination', 'distance']) node.querySelector(`[data-f="${f}"]`).value = t[f];
   el.trips.appendChild(node);
   initInfoButtons(node);
+  // État auto / manuel affiché en tête de l'info contextuelle de chaque option
+  for (const [info, out] of [
+    ['horaire', 'hint-period'],
+    ['metropole', 'hint-metro'],
+  ]) {
+    const panel = document.getElementById(node.querySelector(`[data-info="${info}"]`).getAttribute('aria-controls'));
+    panel.insertAdjacentHTML('afterbegin', `<p class="info-status" data-o="${out}"></p>`);
+  }
   for (const key of ['origin', 'destination']) {
     const input = node.querySelector(`[data-f="${key}"]`);
     attachAutocomplete(input, {
@@ -229,7 +235,6 @@ function updateTrip(t, index, count) {
   sameKm.classList.toggle('hidden', index === 0 || firstKm == null || firstKm === km);
 
   o('duration').textContent = t.apiDuration != null ? formatDuration(t.apiDuration) : '—';
-  o('soon').classList.toggle('hidden', t.apiDuration != null);
 
   const maps = o('maps');
   if (t.origin.trim() && t.destination.trim()) {
@@ -253,7 +258,8 @@ function updateTrip(t, index, count) {
   o('hint-period').innerHTML =
     t.period == null
       ? `Horaire auto : ${period === 'jour' ? `jour (${p.jour.startHour} h–${p.nuit.startHour} h)` : `nuit (${p.nuit.startHour} h–${p.jour.startHour} h)`}`
-      : `Horaire choisi : ${period} · <button type="button" class="link-btn" data-a="period-auto">repasser en auto</button>`;
+      : `Horaire choisi à la main : ${period}`;
+  o('period-auto').classList.toggle('hidden', t.period == null);
 
   let metroText;
   if (t.metropole == null) {
@@ -262,9 +268,10 @@ function updateTrip(t, index, count) {
     else if (t.origin.trim() || t.destination.trim()) metroText = 'Métropole auto : non détectée';
     else metroText = 'Métropole auto : selon le départ et la destination';
   } else {
-    metroText = `Métropole ${t.metropole ? 'ajoutée' : 'retirée'} à la main · <button type="button" class="link-btn" data-a="metro-auto">repasser en auto</button>`;
+    metroText = `Métropole ${t.metropole ? 'ajoutée' : 'retirée'} à la main`;
   }
   o('hint-metro').innerHTML = metroText;
+  o('metro-auto').classList.toggle('hidden', t.metropole == null);
 
   const rateHint = o('hint-rate');
   const nonDefault = t.rate !== TARIFS.defaultRatePerKm;

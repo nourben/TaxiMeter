@@ -1261,3 +1261,14 @@ main.main-wide {
 .ac-detail:empty {
   display: none;
 }
+
+.info-status {
+  font-weight: 600;
+  padding-bottom: 6px;
+  margin-bottom: 6px !important;
+  border-bottom: 1px solid var(--border);
+}
+.auto-link {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}

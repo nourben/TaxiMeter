@@ -17,7 +17,7 @@ export const TASKS = [
   { status: 'done', area: 'Interface', title: 'Titre « Trajet » → « Trajets » et numérotation Trajet 1, 2, 3… dès le 2e trajet' },
   { status: 'done', area: 'Interface', title: 'Bouton « Relever la distance en km sur Google Maps » à droite du départ / destination' },
   { status: 'done', area: 'Interface', title: 'Trajets supplémentaires : boutons « Exclure du prix » / « Inclure dans le prix » (trajet grisé) et « Supprimer ce trajet »' },
-  { status: 'done', area: 'Interface', title: 'Distance et options à largeur égale (Jour/Nuit, Métropole, tarif au km), chacune avec son info « i »' },
+  { status: 'done', area: 'Interface', title: 'Distance et options à largeur égale ; infos « i » sur Jour/Nuit et Métropole avec l’état auto / manuel' },
   { status: 'done', area: 'Interface', title: 'Bouton « Même km que le trajet 1 » sur les trajets suivants' },
   { status: 'done', area: 'Interface', title: 'Bouton ↺ pour revenir à la distance calculée (prêt pour l’API)', note: 'Apparaît seulement quand une valeur API existe et a été modifiée.' },
   { status: 'done', area: 'Tarifs', title: 'Options par trajet : jour / nuit, Métropole, tarif au km' },
