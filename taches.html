@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tâches — TaxiMeter</title>
+    <meta name="theme-color" content="#f5b400" />
+    <script>
+      try { if (localStorage.getItem('taximeter.theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23f5b400'/><text x='16' y='21' font-family='Arial' font-size='12' font-weight='800' text-anchor='middle' fill='%231b1b1f'>TX</text></svg>" />
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main>
+      <h1 class="page-title">Suivi du projet</h1>
+      <p class="muted small" id="progress" style="margin:-8px 0 14px"></p>
+      <div id="tasks"></div>
+    </main>
+    <footer id="site-footer"></footer>
+    <script type="module" src="js/ui/layout.js"></script>
+    <script type="module" src="js/pages/tasks.js"></script>
+  </body>
+</html>

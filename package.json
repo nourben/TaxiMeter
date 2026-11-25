@@ -1,0 +1,11 @@
+{
+  "name": "taximeter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Estimation du prix d'une course de taxi",
+  "scripts": {
+    "start": "npx --yes serve .",
+    "test": "node --test tests/*.test.js"
+  }
+}
