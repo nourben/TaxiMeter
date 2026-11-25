@@ -25,7 +25,7 @@ npm test             # tests du calcul tarifaire et du choix d'itinéraire
 | Dossier / fichier | Rôle |
 |---|---|
 | `js/config/tarifs.js` | **Toute la grille tarifaire** (prise en charge, km inclus, coefficients, horaires, Métropole) et les règles d'itinéraire |
-| `js/core/` | Logique pure, testée : `pricing.js`, `period.js` (jour/nuit), `metropole.js`, `route-selection.js` |
+| `js/core/` | Logique pure, testée : `pricing.js`, `period.js` (jours fériés), `metropole.js`, `periods.js` (statistiques) |
 | `js/services/` | Lien Google Maps, géocodage et autocomplétion (IGN, gratuit), Supabase (statistiques) |
 | `js/ui/` | En-tête/pied de page/thème, infos contextuelles |
 | `js/pages/` | Script de chaque page |
@@ -42,7 +42,6 @@ transport partagé (2 / 3 / 4+ patients)  : − 23 % / − 35 % / − 37 % sur c
 
 Exemples vérifiés par les tests (20 km à 1,20 €) : hospitalisation 37,00 €, nuit 48,30 €, grande ville seule 47,20 €.
 
-## Brancher l'API itinéraire (plus tard)
+## Calcul de distance
 
-`window.TaxiMeter.setRouteResult(1, { distanceKm, durationMin })` remplit la distance et active le bouton ↺.
-La règle de choix entre itinéraires est dans `js/core/route-selection.js`.
+Le bouton « Calculer la distance » appelle la fonction Supabase `route` (Google Routes), qui retient toujours l'itinéraire le plus court en km : l'Assurance maladie rembourse sur la base du trajet le moins onéreux. Voir [docs/SUPABASE.md](docs/SUPABASE.md).

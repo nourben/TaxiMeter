@@ -626,13 +626,9 @@ async function calculateDistance(t) {
     const r = await computeRoute(placeForRoute(t, 'origin'), placeForRoute(t, 'destination'));
     if (!state.trips.includes(t)) return;
     const index = state.trips.indexOf(t);
-    const detour = round2(r.distanceKm - r.shortest.distanceKm);
     t.routeMsg = {
       durationMin: r.durationMin,
-      text:
-        r.reason === 'faster-alternative'
-          ? `Distance calculée : ${fmtKm(r.distanceKm)}. Le plus court (${fmtKm(r.shortest.distanceKm)}) était chargé : itinéraire plus rapide retenu, ${fmtKm(detour)} de plus.`
-          : `Distance calculée : ${fmtKm(r.distanceKm)} (itinéraire le plus court).`,
+      text: `Distance calculée : ${fmtKm(r.distanceKm)} (itinéraire le plus court).`,
     };
     t.calculating = false;
     setRouteResult(index, { distanceKm: r.distanceKm, durationMin: r.durationMin });

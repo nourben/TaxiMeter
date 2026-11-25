@@ -51,10 +51,3 @@ export const SHARED_TRANSPORT = {
 /** Nombre maximum de trajets dans une même course */
 export const MAX_TRIPS = 20;
 
-/** Règles de choix d'itinéraire (utilisées quand l'API sera branchée) */
-export const ROUTING_RULES = {
-  /** Trajet jugé « long » si durée (min) > distance (km) × ce ratio. 1 km = 1 min → 1 ; « largement » → 1,3 */
-  slowRatio: 1.3,
-  /** Détour maximum accepté pour un itinéraire alternatif (km) */
-  maxDetourKm: 10,
-};

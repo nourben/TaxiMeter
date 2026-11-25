@@ -7,7 +7,7 @@
 | `estimates` | table | le site (clé publique) | une ligne par événement, colonne `kind` : `price` (estimation de prix) ou `distance` (calcul de distance) ; le site peut **ajouter** mais pas **lire** |
 | `estimates_per_period(granularity, periods, kind)` | fonction SQL (RPC) | page Statistiques | nombre d'événements d'un type par jour / semaine / mois / année, périodes vides comprises |
 | `api_usage` + `increment_api_usage(provider)` | table + fonction SQL | fonction `route` uniquement | compteur mensuel d'appels Google : la fonction refuse les calculs au-delà de la limite (4 600 par défaut) |
-| `route` | Edge Function ([`supabase/functions/route/index.ts`](../supabase/functions/route/index.ts)) | bouton « Calculer la distance » | appelle Google Routes avec la clé secrète, applique la règle de choix d'itinéraire, renvoie distance et durée |
+| `route` | Edge Function ([`supabase/functions/route/index.ts`](../supabase/functions/route/index.ts)) | bouton « Calculer la distance » | appelle Google Routes avec la clé secrète, retient l'itinéraire le plus court en km, renvoie distance et durée |
 
 Le schéma SQL est dans [`supabase/migrations/`](../supabase/migrations/), à exécuter dans l'ordre : `0001_init.sql`, `0002_distance_calculations.sql`, puis `0003_route_counter_grant.sql` (testés sur PostgreSQL 16).
 

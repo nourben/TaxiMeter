@@ -2,7 +2,7 @@
 //
 // Appel : POST {SUPABASE_URL}/functions/v1/route  (en-tête apikey: <clé publishable>)
 // Corps : { "origin": { "label": "...", "lat"?: 48.8, "lon"?: 2.3 }, "destination": { ... } }
-// Réponse 200 : { distanceKm, durationMin, reason, shortest, routes: [...] }
+// Réponse 200 : { distanceKm, durationMin, routes: [...] }  (itinéraire le plus court en km)
 // Erreurs : 400 requête invalide · 422 adresse non trouvée · 429 quota du mois atteint · 502 Google indisponible
 //
 // Secrets (Supabase → Edge Functions → Secrets) :
@@ -13,10 +13,6 @@
 // SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis automatiquement par Supabase.
 
 const ALLOWED_ORIGINS = ['https://nourben.github.io', 'http://localhost:8765', 'http://localhost:3000'];
-
-/** Mêmes règles que js/config/tarifs.js (ROUTING_RULES) */
-const SLOW_RATIO = 1.3; // trajet « long » si durée (min) > distance (km) × 1,3
-const MAX_DETOUR_KM = 10; // alternative acceptée avec au plus 10 km de plus
 
 type Place = { label?: string; lat?: number; lon?: number };
 type Route = { distanceKm: number; durationMin: number };
@@ -48,16 +44,13 @@ function validPlace(p: Place) {
   return (Number.isFinite(p?.lat) && Number.isFinite(p?.lon)) || String(p?.label ?? '').trim().length >= 2;
 }
 
-/** Plus court en km ; si trajet long, alternative plus rapide avec ≤ 10 km de plus. */
+/**
+ * Retient toujours l'itinéraire le plus court en km parmi ceux proposés par Google.
+ * L'Assurance maladie rembourse sur la base du trajet le moins onéreux et vérifie les km facturés :
+ * pas de détour plus long, même plus rapide.
+ */
 export function selectRoute(routes: Route[]) {
-  const shortest = routes.reduce((a, b) => (b.distanceKm < a.distanceKm ? b : a));
-  if (shortest.durationMin <= shortest.distanceKm * SLOW_RATIO) return { route: shortest, shortest, reason: 'shortest' };
-  const candidates = routes.filter(
-    (r) => r !== shortest && r.distanceKm <= shortest.distanceKm + MAX_DETOUR_KM && r.durationMin < shortest.durationMin,
-  );
-  if (!candidates.length) return { route: shortest, shortest, reason: 'no-alternative' };
-  const fastest = candidates.reduce((a, b) => (b.durationMin < a.durationMin ? b : a));
-  return { route: fastest, shortest, reason: 'faster-alternative' };
+  return routes.reduce((a, b) => (b.distanceKm < a.distanceKm || (b.distanceKm === a.distanceKm && b.durationMin < a.durationMin) ? b : a));
 }
 
 /** Incrémente le compteur mensuel ; renvoie le nombre d'appels du mois (ou null si la base ne répond pas). */
@@ -148,8 +141,8 @@ async function handle(req: Request): Promise<Response> {
     return json({ error: 'not_found', message: 'Aucun itinéraire trouvé entre ces deux adresses.' }, 422, origin);
   }
 
-  const { route, shortest, reason } = selectRoute(routes);
-  return json({ distanceKm: route.distanceKm, durationMin: route.durationMin, reason, shortest, routes }, 200, origin);
+  const route = selectRoute(routes);
+  return json({ distanceKm: route.distanceKm, durationMin: route.durationMin, routes }, 200, origin);
 }
 
 Deno.serve(handle);
