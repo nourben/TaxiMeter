@@ -6,9 +6,10 @@
 |---|---|---|---|
 | `estimates` | table | le site (clé publique) | une ligne par événement, colonne `kind` : `price` (estimation de prix) ou `distance` (calcul de distance) ; le site peut **ajouter** mais pas **lire** |
 | `estimates_per_period(granularity, periods, kind)` | fonction SQL (RPC) | page Statistiques | nombre d'événements d'un type par jour / semaine / mois / année, périodes vides comprises |
+| `api_usage` + `increment_api_usage(provider)` | table + fonction SQL | fonction `route` uniquement | compteur mensuel d'appels Google : la fonction refuse les calculs au-delà de la limite (4 500 par défaut) |
 | `route` | Edge Function ([`supabase/functions/route/index.ts`](../supabase/functions/route/index.ts)) | bouton « Calculer la distance » | appelle Google Routes avec la clé secrète, applique la règle de choix d'itinéraire, renvoie distance et durée |
 
-Le schéma SQL est dans [`supabase/migrations/`](../supabase/migrations/), à exécuter dans l'ordre : `0001_init.sql`, puis `0002_distance_calculations.sql` (testés sur PostgreSQL 16).
+Le schéma SQL est dans [`supabase/migrations/`](../supabase/migrations/), à exécuter dans l'ordre : `0001_init.sql`, `0002_distance_calculations.sql`, puis `0003_route_counter_grant.sql` (testés sur PostgreSQL 16).
 
 ### Appels depuis le site
 
@@ -26,11 +27,13 @@ En-têtes : `apikey: <clé publique>` (+ `Authorization: Bearer <clé publique>`
 2. **Créer les tables** — SQL Editor → New query → coller tout `supabase/migrations/0001_init.sql` → Run.
 3. **Récupérer les accès publics** — Project Settings → API : copier **Project URL** et la clé **anon / publishable**. Ces deux valeurs sont publiques (elles iront dans le site) : on peut les envoyer à Claude.
 4. **Mettre à jour la base** — SQL Editor → coller `supabase/migrations/0002_distance_calculations.sql` → Run.
+4 bis. **Autoriser le compteur** — SQL Editor → coller `supabase/migrations/0003_route_counter_grant.sql` → Run.
 5. **Clé Google** — voir « Activer Google Routes API » ci-dessous.
 6. **Ranger la clé en secret** — Supabase → Edge Functions → Secrets : `GOOGLE_MAPS_API_KEY`. Ne jamais la mettre dans le code ni dans le chat.
 7. **Claude branche le site** — fait : configuration Supabase, enregistrement des estimations, vraies données dans les Statistiques.
 8. **Déployer la fonction `route`** — Edge Functions → *Deploy a new function* → *Via Editor* → nom **`route`** → remplacer le code par tout `supabase/functions/route/index.ts` → *Deploy*.
 9. **Désactiver la vérification JWT** de la fonction — Edge Functions → `route` → *Details* (ou *Settings*) → décocher *Verify JWT / Enforce JWT verification* → enregistrer. Indispensable : la clé « publishable » du site n'est pas un JWT.
+10. *(Facultatif)* secret `GOOGLE_MONTHLY_LIMIT` pour changer la limite mensuelle de calculs (4 500 par défaut, sous les 5 000 gratuits).
 
 > Offre gratuite : un projet inactif pendant une semaine est mis en pause ; il se relance depuis le tableau de bord.
 
