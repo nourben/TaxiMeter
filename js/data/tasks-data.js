@@ -54,6 +54,8 @@ export const TASKS = [
   { status: 'todo', area: 'API itinéraire', title: 'Remplir distance et temps de trajet de chaque trajet automatiquement (déjà branché via setRouteResult)' },
   { status: 'todo', area: 'API itinéraire', title: 'Indiquer à l’utilisateur quand une alternative plus rapide a été retenue' },
   { status: 'todo', area: 'API itinéraire', title: 'Garder le lien Google Maps et la saisie manuelle en secours si l’API échoue' },
+  { status: 'todo', area: 'API itinéraire', title: 'Activer le bouton « Calculer la distance » (grisé pour l’instant)' },
+  { status: 'todo', area: 'API itinéraire', title: 'Signaler quand la ville / l’adresse de départ ou de destination n’est pas reconnue', note: 'Message sous le champ concerné, en proposant de corriger la saisie ou de passer par Google Maps.' },
   { status: 'todo', area: 'Interface', title: 'Autocomplétion des adresses pendant la saisie' },
 
   // ---------- Plus tard ----------
