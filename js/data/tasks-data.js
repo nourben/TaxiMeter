@@ -14,9 +14,9 @@ export const TASKS = [
   { status: 'done', area: 'Interface', title: 'Module Trajet : départ / destination, distance, temps de trajet estimé (affichage)' },
   { status: 'done', area: 'Interface', title: 'Jusqu’à 20 trajets dans une même course (lien « + Ajouter un trajet »)' },
   { status: 'done', area: 'Interface', title: 'Titre « Trajet » → « Trajets » et numérotation Trajet 1, 2, 3… dès le 2e trajet' },
-  { status: 'done', area: 'Interface', title: 'Bouton « Voir le trajet sur Google Maps » par trajet, pour relever la distance' },
-  { status: 'done', area: 'Interface', title: 'Trajets supplémentaires : « Exclure du prix » / « Inclure dans le prix » (trajet grisé) et « Supprimer ce trajet »' },
-  { status: 'done', area: 'Interface', title: 'Options empilées à largeur égale : Jour/Nuit, Métropole, puis tarif au km ; icônes jour/nuit cerclées' },
+  { status: 'done', area: 'Interface', title: 'Bouton « Relever la distance en km sur Google Maps » à droite du départ / destination' },
+  { status: 'done', area: 'Interface', title: 'Trajets supplémentaires : boutons « Exclure du prix » / « Inclure dans le prix » (trajet grisé) et « Supprimer ce trajet »' },
+  { status: 'done', area: 'Interface', title: 'Distance et options à largeur égale (Jour/Nuit, Métropole, tarif au km), chacune avec son info « i »' },
   { status: 'done', area: 'Interface', title: 'Bouton « Même km que le trajet 1 » sur les trajets suivants' },
   { status: 'done', area: 'Interface', title: 'Bouton ↺ pour revenir à la distance calculée (prêt pour l’API)', note: 'Apparaît seulement quand une valeur API existe et a été modifiée.' },
   { status: 'done', area: 'Tarifs', title: 'Options par trajet : jour / nuit, Métropole, tarif au km' },
@@ -25,6 +25,7 @@ export const TASKS = [
   { status: 'done', area: 'Tarifs', title: 'Tarif au km 1,20 € par défaut ; 1,22 € et 1,07 € mis en couleur quand ils sont choisis' },
   { status: 'done', area: 'Tarifs', title: 'Module Prix : total de la course + prix de chaque trajet avec son détail' },
   { status: 'done', area: 'Tarifs', title: 'Tests automatiques du calcul (exemples 37,00 € / 48,30 € vérifiés)' },
+  { status: 'done', area: 'Tarifs', title: 'Tarif jour à × 1,5 à partir de 50 km (au lieu de × 1,25)' },
   { status: 'done', area: 'Interface', title: 'Infos contextuelles « i » (horaires, Métropole, km inclus…)' },
   { status: 'done', area: 'Interface', title: 'Thème clair (défaut) / sombre, mémorisé sur l’appareil' },
   { status: 'done', area: 'Interface', title: 'Interface resserrée (moins de place sur mobile)' },
@@ -39,6 +40,7 @@ export const TASKS = [
   { status: 'validate', area: 'Tarifs', title: 'Zone Métropole : rayon de 11 km autour de Notre-Dame + codes postaux 75/92/93/94', note: 'Paris – Créteil ≈ 10,4 km à vol d’oiseau. Certaines communes de petite couronne dépassent 11 km mais sont incluses par leur code postal.' },
   { status: 'validate', area: 'Tarifs', title: 'Trajets supplémentaires : prise en charge de 13 € comptée à chaque trajet ?', note: 'Aujourd’hui chaque trajet est calculé comme une course complète (prise en charge et 4 km inclus compris), puis les montants sont additionnés.' },
   { status: 'validate', area: 'API itinéraire', title: 'Seuil « trajet long » : durée > distance × 1,3', note: '« Largement plus que 1 km = 1 min » traduit par un ratio de 1,3 (réglable).' },
+  { status: 'validate', area: 'Tarifs', title: 'Règle des 50 km de jour : 50 km pile inclus, et × 1,5 sur toute la distance ?', note: 'Aujourd’hui : dès 50,0 km, tout le trajet passe à × 1,5 sur la distance (pas seulement les km au-delà de 50). La nuit n’est pas concernée.' },
   { status: 'validate', area: 'Interface', title: 'Valider l’interface (mobile et ordinateur, clair et sombre)' },
 
   // ---------- À faire (prochaine étape) ----------
