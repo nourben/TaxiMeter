@@ -181,12 +181,12 @@ function tripTemplate(t) {
       <div class="opts">
         <h3 class="opts-title">Tarification</h3>
         <div class="opt-row">
+          <button type="button" class="chip opt-wide chip-icon" data-a="hospital" aria-pressed="false">${ICON_HOSP}<span data-o="hosp-label">Hospitalisation (HDJ)</span></button>
+          <button class="info-btn" data-info="hospital" aria-label="Aide sur la majoration hospitalisation">i</button>
+        </div>
+        <div class="opt-row opt-night">
           <button type="button" class="chip opt-wide chip-icon" data-a="night" aria-pressed="false">${ICON_NIGHT}<span data-o="night-label">Nuit / WE / férié</span></button>
           <button class="info-btn" data-info="nuit" aria-label="Aide sur la majoration nuit, week-end et jours fériés">i</button>
-        </div>
-        <div class="opt-row opt-hosp">
-          <button type="button" class="chip opt-wide chip-icon" data-a="hospital" aria-pressed="false">${ICON_HOSP}<span data-o="hosp-label">Hospitalisation</span></button>
-          <button class="info-btn" data-info="hospital" aria-label="Aide sur la majoration hospitalisation">i</button>
         </div>
         <div class="opt-row opt-metro">
           <button type="button" class="chip opt-wide" data-a="metro" aria-pressed="false">Métropole</button>
@@ -306,8 +306,8 @@ function updateTrip(t, index, count) {
   const H = TARIFS.majorations.hospital;
   const longHosp = (readKm(t.distance) ?? 0) >= H.longFromKm;
   o('hosp-label').textContent = t.hospital
-    ? `✓ Hospitalisation +${Math.round((longHosp ? H.longRate : H.rate) * 100)} %`
-    : 'Hospitalisation';
+    ? `✓ HDJ +${Math.round((longHosp ? H.longRate : H.rate) * 100)} % sur les km`
+    : 'Hospitalisation (HDJ)';
   const metro = effectiveMetro(t);
   const chip = node.querySelector('[data-a="metro"]');
   chip.setAttribute('aria-pressed', String(metro));
