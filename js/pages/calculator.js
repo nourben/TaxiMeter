@@ -5,7 +5,7 @@ import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
-import { scheduleEstimateLog } from '../services/estimates-log.js';
+import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { initInfoButtons } from '../ui/info.js';
 
 const $ = (id) => document.getElementById(id);
@@ -476,6 +476,10 @@ function bind() {
         t.distance = state.trips[0].distance;
         node.querySelector('[data-f="distance"]').value = t.distance;
         break;
+      case 'calc':
+        // Statistiques : une demande de calcul de distance. L'appel à l'API viendra ici.
+        logDistanceCalculation();
+        return;
       case 'exclude':
         t.excluded = !t.excluded;
         break;

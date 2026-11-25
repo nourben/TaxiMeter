@@ -4,18 +4,18 @@
 
 | Élément | Type | Qui l'appelle | Rôle |
 |---|---|---|---|
-| `estimates` | table | le site (clé publique) | une ligne par estimation ; le site peut **ajouter** mais pas **lire** |
-| `estimates_per_period(granularity, periods)` | fonction SQL (RPC) | page Statistiques | nombre d'estimations par jour / semaine / mois / année, périodes vides comprises |
+| `estimates` | table | le site (clé publique) | une ligne par événement, colonne `kind` : `price` (estimation de prix) ou `distance` (calcul de distance) ; le site peut **ajouter** mais pas **lire** |
+| `estimates_per_period(granularity, periods, kind)` | fonction SQL (RPC) | page Statistiques | nombre d'événements d'un type par jour / semaine / mois / année, périodes vides comprises |
 | `api_usage` + `increment_api_usage(provider)` | table + fonction SQL | fonction `route` uniquement | compteur mensuel d'appels Google / TomTom |
 | `route` | Edge Function (à écrire) | bouton « Calculer la distance » | appelle Google ou TomTom avec les clés secrètes, applique la règle de choix d'itinéraire, renvoie distance et durée |
 
-Le schéma SQL est dans [`supabase/migrations/0001_init.sql`](../supabase/migrations/0001_init.sql) (testé sur PostgreSQL 16).
+Le schéma SQL est dans [`supabase/migrations/`](../supabase/migrations/), à exécuter dans l'ordre : `0001_init.sql`, puis `0002_distance_calculations.sql` (testés sur PostgreSQL 16).
 
 ### Appels depuis le site
 
 ```
 POST {SUPABASE_URL}/rest/v1/estimates                         → enregistrer une estimation
-POST {SUPABASE_URL}/rest/v1/rpc/estimates_per_period          → { "granularity": "day", "periods": 10 }
+POST {SUPABASE_URL}/rest/v1/rpc/estimates_per_period          → { "granularity": "day", "periods": 10, "kind": "price" }
 POST {SUPABASE_URL}/functions/v1/route                        → { "origin": {...}, "destination": {...} }
 ```
 

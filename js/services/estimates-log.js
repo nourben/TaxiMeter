@@ -1,7 +1,8 @@
 /**
- * Enregistre une estimation dans Supabase (table `estimates`).
- * Règle : un prix compte comme estimation quand il reste affiché 3 secondes
- * sans changement ; la même estimation n'est enregistrée qu'une fois.
+ * Statistiques enregistrées dans Supabase (table `estimates`, colonne `kind`).
+ * - 'price' : estimation de prix, comptée quand une distance est saisie et que le prix
+ *   reste affiché 3 secondes sans changement (le temps de finir de taper) ; une fois par prix.
+ * - 'distance' : demande de calcul de distance (bouton « Calculer la distance »).
  */
 import { insert } from './supabase.js';
 
@@ -19,8 +20,13 @@ export function scheduleEstimateLog(estimate) {
   timer = setTimeout(() => {
     const { signature, ...row } = estimate;
     lastSignature = signature;
-    insert('estimates', row).catch(() => {
+    insert('estimates', { kind: 'price', ...row }).catch(() => {
       lastSignature = null; // nouvel essai au prochain changement
     });
   }, STABLE_MS);
+}
+
+/** Enregistre une demande de calcul de distance (clic sur « Calculer la distance »). */
+export function logDistanceCalculation() {
+  insert('estimates', { kind: 'distance', distance_source: 'api' }).catch(() => {});
 }

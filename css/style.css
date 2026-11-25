@@ -1419,7 +1419,29 @@ main.main-wide {
   .chart[data-g='day'] .chart-col:nth-child(even) .chart-x {
     visibility: hidden; /* 10 jours : une étiquette sur deux sur petit écran */
   }
-  .chart-col.is-current .chart-x {
+  .chart[data-g='day'] .chart-col.is-current .chart-x {
     visibility: visible;
   }
+}
+
+/* Module de statistiques replié */
+.stats-collapsible > summary {
+  list-style: none;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+.stats-collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+.stats-collapsible > summary::after {
+  content: '▾';
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  transition: transform 0.15s;
+}
+.stats-collapsible:not([open]) > summary::after {
+  transform: rotate(-90deg);
+}
+.stats-collapsible[open] > summary {
+  margin-bottom: 12px;
 }

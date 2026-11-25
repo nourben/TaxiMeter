@@ -16,29 +16,43 @@
     <main>
       <h1 class="page-title">Statistiques</h1>
 
-      <section class="card" aria-labelledby="h-chart">
+      <section class="card stats-module" data-kind="price" aria-labelledby="h-price-stats">
         <div class="card-head">
           <div>
-            <h2 id="h-chart">Estimations réalisées</h2>
-            <p class="muted small" id="chart-caption" style="margin:2px 0 0"></p>
+            <h2 id="h-price-stats">Estimations de prix réalisées</h2>
+            <p class="muted small" data-r="caption" style="margin:2px 0 0"></p>
           </div>
         </div>
-
-        <div class="segmented seg-sm chart-switch" role="radiogroup" aria-label="Période" id="granularity"></div>
-
-        <div class="stat-row" id="stat-row"></div>
-
-        <div class="chart" id="chart" role="img" aria-labelledby="h-chart chart-caption"></div>
-        <div class="chart-tip hidden" id="chart-tip" role="status"></div>
-
-        <details class="chart-table">
-          <summary>Voir le tableau</summary>
-          <table class="data-table"><thead><tr><th>Période</th><th class="num">Estimations</th></tr></thead><tbody id="chart-rows"></tbody></table>
-        </details>
-
-        <p class="demo-note hidden" id="stats-error">Impossible de charger les statistiques pour le moment (base de données injoignable).</p>
-        <p class="hint hidden" id="stats-empty" style="text-align:center">Aucune estimation enregistrée sur cette période.</p>
+          <div class="segmented seg-sm chart-switch" role="radiogroup" aria-label="Période" data-r="switch"></div>
+          <div class="stat-row" data-r="stats"></div>
+          <div class="chart" data-r="chart" role="img"></div>
+          <div class="chart-tip hidden" data-r="tip" role="status"></div>
+          <details class="chart-table">
+            <summary>Voir le tableau</summary>
+            <table class="data-table"><thead><tr><th>Période</th><th class="num">Nombre</th></tr></thead><tbody data-r="rows"></tbody></table>
+          </details>
+          <p class="hint hidden" data-r="empty" style="text-align:center">Rien d’enregistré sur cette période.</p>
+          <p class="demo-note hidden" data-r="error">Impossible de charger les statistiques pour le moment (base de données injoignable).</p>
       </section>
+
+      <details class="card stats-module stats-collapsible" data-kind="distance">
+        <summary class="card-head">
+          <div>
+            <h2>Calculs de distance</h2>
+            <p class="muted small" data-r="caption" style="margin:2px 0 0">Demandes faites avec le bouton « Calculer la distance »</p>
+          </div>
+        </summary>
+          <div class="segmented seg-sm chart-switch" role="radiogroup" aria-label="Période" data-r="switch"></div>
+          <div class="stat-row" data-r="stats"></div>
+          <div class="chart" data-r="chart" role="img"></div>
+          <div class="chart-tip hidden" data-r="tip" role="status"></div>
+          <details class="chart-table">
+            <summary>Voir le tableau</summary>
+            <table class="data-table"><thead><tr><th>Période</th><th class="num">Nombre</th></tr></thead><tbody data-r="rows"></tbody></table>
+          </details>
+          <p class="hint hidden" data-r="empty" style="text-align:center">Rien d’enregistré sur cette période.</p>
+          <p class="demo-note hidden" data-r="error">Impossible de charger les statistiques pour le moment (base de données injoignable).</p>
+      </details>
     </main>
     <footer id="site-footer"></footer>
     <script type="module" src="js/ui/layout.js"></script>
