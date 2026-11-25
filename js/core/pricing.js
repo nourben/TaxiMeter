@@ -33,24 +33,28 @@ export function computeFare({ distanceKm, ratePerKm, period, metropole }, cfg = 
     },
   ];
 
+  const long = p.longDistance && km >= p.longDistance.fromKm;
+  const multiplier = long ? p.longDistance.multiplier : p.multiplier;
+  const longNote = long ? ` (≥ ${p.longDistance.fromKm} km)` : '';
+
   let subtotal;
   if (p.appliesTo === 'distance') {
-    const majoration = round2(distanceCost * (p.multiplier - 1));
+    const majoration = round2(distanceCost * (multiplier - 1));
     subtotal = cfg.pickup + distanceCost + majoration;
     lines.push({
       key: 'period',
       label: `Tarif ${p.label.toLowerCase()}`,
-      detail: `× ${fmtNum(p.multiplier)} sur la distance`,
+      detail: `× ${fmtNum(multiplier)} sur la distance${longNote}`,
       amount: majoration,
     });
   } else {
     const base = cfg.pickup + distanceCost;
-    const majoration = round2(base * (p.multiplier - 1));
+    const majoration = round2(base * (multiplier - 1));
     subtotal = base + majoration;
     lines.push({
       key: 'period',
       label: `Tarif ${p.label.toLowerCase()}`,
-      detail: `× ${fmtNum(p.multiplier)} sur le total`,
+      detail: `× ${fmtNum(multiplier)} sur le total${longNote}`,
       amount: majoration,
     });
   }

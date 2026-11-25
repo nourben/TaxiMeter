@@ -49,3 +49,12 @@ test('période : 8h00 jour, 19h59 jour, 20h00 nuit, 7h59 nuit', () => {
   assert.equal(periodForDate(at(7, 59)), 'nuit');
   assert.equal(periodForDate(at(0, 30)), 'nuit');
 });
+
+test('jour à partir de 50 km : coefficient × 1,5', () => {
+  // 13 + 46 × 1,2 × 1,5 = 13 + 55,20 + 27,60 = 95,80
+  assert.equal(computeFare({ distanceKm: 50, ratePerKm: 1.2, period: 'jour', metropole: false }).total, 95.8);
+  // 49,9 km reste à × 1,25 : 13 + 45,9 × 1,2 = 55,08 → + 13,77 = 81,85
+  assert.equal(computeFare({ distanceKm: 49.9, ratePerKm: 1.2, period: 'jour', metropole: false }).total, 81.85);
+  // la nuit n'est pas concernée : (13 + 55,20) × 1,5 = 102,30
+  assert.equal(computeFare({ distanceKm: 50, ratePerKm: 1.2, period: 'nuit', metropole: false }).total, 102.3);
+});

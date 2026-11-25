@@ -21,10 +21,18 @@ export const TARIFS = {
    *  - 'total'    → le coefficient s'applique à (prise en charge + distance)
    * Ces choix reproduisent exactement les exemples fournis :
    *  jour 20 km : 13 + 19,20 × 1,25   = 37,00 €
+   *  jour ≥ 50 km : coefficient × 1,5 au lieu de × 1,25
    *  nuit 20 km : (13 + 19,20) × 1,5  = 48,30 €
    */
   periods: {
-    jour: { label: 'Jour', startHour: 8, multiplier: 1.25, appliesTo: 'distance' },
+    jour: {
+      label: 'Jour',
+      startHour: 8,
+      multiplier: 1.25,
+      appliesTo: 'distance',
+      /** Longue distance : à partir de fromKm (inclus), le coefficient de jour passe à multiplier */
+      longDistance: { fromKm: 50, multiplier: 1.5 },
+    },
     nuit: { label: 'Nuit', startHour: 20, multiplier: 1.5, appliesTo: 'total' },
   },
 
