@@ -100,6 +100,8 @@ const ICON_DAY =
 const ICON_NIGHT =
   '<svg class="period-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M14.8 6.6a5.6 5.6 0 1 0 2.6 9.6 4.6 4.6 0 0 1-2.6-9.6z"/></svg>';
 
+const ICON_ROUTE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></svg>';
 const ICON_TRASH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>';
 const ICON_EYE_OFF =
@@ -130,10 +132,16 @@ function tripTemplate(t) {
           <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ" aria-label="Départ (adresse ou ville)" enterkeyhint="next" /></div>
           <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination (adresse ou ville)" enterkeyhint="next" /></div>
         </div>
-        <a class="maps-btn" data-o="maps" target="_blank" rel="noopener">
-          ${PIN}
-          <span>Relever la distance en km<br />sur Google Maps</span>
-        </a>
+        <div class="route-actions">
+          <button type="button" class="calc-btn" data-a="calc" disabled title="Arrivera avec le calcul automatique d’itinéraire">
+            ${ICON_ROUTE}
+            <span>Calculer la distance<small>bientôt disponible</small></span>
+          </button>
+          <a class="maps-btn" data-o="maps" target="_blank" rel="noopener">
+            ${PIN}
+            <span>Relever la distance en km<br />sur Google Maps</span>
+          </a>
+        </div>
       </div>
       <div class="km-field opt-wide">
         <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />

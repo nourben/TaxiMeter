@@ -839,7 +839,7 @@ main.main-wide {
 
 .route-wrap {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 152px;
+  grid-template-columns: minmax(0, 1fr) 168px;
   gap: 8px;
   align-items: stretch;
 }
@@ -882,35 +882,67 @@ main.main-wide {
   box-shadow: none;
 }
 
-/* Bouton Google Maps : couleurs Google, pas le logo officiel */
-.maps-btn {
+.route-actions {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+.calc-btn,
+.maps-btn {
+  flex: 1;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 8px 8px 11px;
+  gap: 6px;
+  padding: 4px 7px;
+  min-height: 42px;
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background:
-    linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75%) bottom / 100% 4px no-repeat,
-    var(--surface);
+  background: var(--surface);
   color: var(--text);
-  text-decoration: none;
-  text-align: center;
-  font-size: 0.74rem;
+  font: inherit;
+  font-size: 0.68rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
+}
+.calc-btn svg,
+.maps-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.calc-btn span {
+  display: flex;
+  flex-direction: column;
+}
+.calc-btn small {
+  font-weight: 500;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+.calc-btn:disabled {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+/* Bouton Google Maps : couleurs Google, pas le logo officiel */
+.maps-btn {
+  padding-bottom: 7px;
+  background:
+    linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75%) bottom / 100% 3px no-repeat,
+    var(--surface);
   box-shadow: 0 1px 2px rgba(20, 20, 30, 0.08);
 }
 .maps-btn:hover {
   border-color: #4285f4;
 }
 .maps-btn svg {
-  width: 22px;
-  height: 22px;
   color: #ea4335;
 }
 .maps-btn[aria-disabled='true'] {
@@ -918,18 +950,21 @@ main.main-wide {
   cursor: not-allowed;
 }
 
-.trip-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
 .km-field {
   position: relative;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 .km-field input {
   padding-right: 76px;
+}
+.km-field .suffix {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  pointer-events: none;
 }
 .km-reset {
   position: absolute;
@@ -944,15 +979,6 @@ main.main-wide {
   color: var(--text);
   font-size: 1rem;
   cursor: pointer;
-}
-.km-field .suffix {
-  position: absolute;
-  right: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  pointer-events: none;
 }
 .same-km {
   margin-left: auto;
