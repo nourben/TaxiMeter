@@ -49,6 +49,7 @@ function newTrip() {
     rate: TARIFS.defaultRatePerKm,
     excluded: false,
     soloLong: false,
+    copiedFromFirst: false,
     calculating: false,
     routeMsg: null,
     geo: { origin: null, destination: null },
@@ -124,6 +125,8 @@ const ICON_NIGHT =
 
 const ICON_ROUTE =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></svg>';
+const ICON_CLEAR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
 const ICON_TRASH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>';
 const ICON_EYE_OFF =
@@ -145,7 +148,7 @@ function tripTemplate(t) {
       <span class="trip-price" data-o="price"></span>
       <div class="trip-actions">
         <button type="button" class="btn btn-sm" data-a="exclude"></button>
-        <button type="button" class="btn btn-sm btn-danger" data-a="remove">${ICON_TRASH}<span>Supprimer ce trajet</span></button>
+        <button type="button" class="btn btn-sm btn-danger" data-a="remove" aria-label="Supprimer ce trajet" title="Supprimer ce trajet">${ICON_TRASH}<span class="btn-label">Supprimer ce trajet</span></button>
       </div>
     </div>
     <div class="trip-body">
@@ -170,10 +173,12 @@ function tripTemplate(t) {
         <button type="button" class="km-reset hidden" data-a="reset-km" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
         <span class="suffix">km</span>
       </div>
+      <button type="button" class="icon-mini" data-a="clear-km" data-o="clear-km" aria-label="Vider la distance" title="Vider la distance">${ICON_CLEAR}</button>
       <div class="trip-meta opt-side">
         <button type="button" class="link-btn same-km" data-a="same-km">Même km que le trajet 1</button>
       </div>
       </div>
+      <p class="copy-note hidden" data-o="copy-note">Métropole activée comme pour le trajet 1 (même kilométrage repris).</p>
       <div class="opts">
         <h3 class="opts-title">Tarification</h3>
         <div class="opt-row">
@@ -250,7 +255,11 @@ function updateTrip(t, index, count) {
   o('title').textContent = `Trajet ${index + 1}`;
   node.querySelector('.trip-actions').classList.toggle('hidden', index === 0);
   const excludeBtn = node.querySelector('[data-a="exclude"]');
-  excludeBtn.innerHTML = t.excluded ? `${ICON_EYE}<span>Inclure dans le prix</span>` : `${ICON_EYE_OFF}<span>Exclure du prix</span>`;
+  excludeBtn.innerHTML = t.excluded
+    ? `${ICON_EYE}<span class="btn-label">Inclure dans le prix</span>`
+    : `${ICON_EYE_OFF}<span class="btn-label">Exclure du prix</span>`;
+  excludeBtn.setAttribute('aria-label', t.excluded ? 'Inclure dans le prix' : 'Exclure du prix');
+  excludeBtn.title = excludeBtn.getAttribute('aria-label');
   excludeBtn.setAttribute('aria-pressed', String(!!t.excluded));
   node.classList.toggle('excluded', !!t.excluded);
   const r = fareOf(t);
@@ -260,6 +269,8 @@ function updateTrip(t, index, count) {
   const km = readKm(t.distance);
   node.querySelector('[data-a="reset-km"]').classList.toggle('hidden', t.apiDistance == null || km === t.apiDistance);
 
+  o('clear-km').classList.toggle('is-invisible', !String(t.distance).trim());
+  o('copy-note').classList.toggle('hidden', !(index > 0 && t.copiedFromFirst && effectiveMetro(t)));
   const sameKm = node.querySelector('[data-a="same-km"]');
   const firstKm = readKm(state.trips[0].distance);
   sameKm.classList.toggle('hidden', index === 0 || firstKm == null || firstKm === km);
@@ -507,6 +518,7 @@ function bind() {
     const f = e.target.dataset.f;
     if (!t || !['origin', 'destination', 'distance'].includes(f)) return;
     t[f] = e.target.value;
+    if (f === 'distance') t.copiedFromFirst = false;
     if (f !== 'distance') {
       scheduleGeocode(t, f);
       t.routeMsg = null;
@@ -544,9 +556,18 @@ function bind() {
         t.distance = String(t.apiDistance);
         node.querySelector('[data-f="distance"]').value = t.distance;
         break;
+      case 'clear-km':
+        t.distance = '';
+        t.copiedFromFirst = false;
+        node.querySelector('[data-f="distance"]').value = '';
+        node.querySelector('[data-f="distance"]').focus();
+        break;
       case 'same-km':
         t.distance = state.trips[0].distance;
         node.querySelector('[data-f="distance"]').value = t.distance;
+        // Même course que le trajet 1 : la Métropole suit
+        t.copiedFromFirst = effectiveMetro(state.trips[0]);
+        if (t.copiedFromFirst) t.metropole = true;
         break;
       case 'calc':
         calculateDistance(t);
@@ -556,9 +577,11 @@ function bind() {
         break;
       case 'metro':
         t.metropole = !effectiveMetro(t);
+        t.copiedFromFirst = false;
         break;
       case 'metro-auto':
         t.metropole = null;
+        t.copiedFromFirst = false;
         break;
       case 'night':
         t.night = !effectiveNight(t);

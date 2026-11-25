@@ -1435,3 +1435,57 @@ input:focus {
 .opt-hosp {
   margin-top: 12px;
 }
+
+/* Bouton « vider » à côté de la distance */
+.icon-mini {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.icon-mini:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.icon-mini svg {
+  width: 20px;
+  height: 20px;
+}
+.is-invisible {
+  visibility: hidden;
+}
+/* Info : Métropole reprise du trajet 1 */
+.copy-note {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--focus);
+}
+/* En-tête de trajet : titre, prix et actions sur une ligne */
+.trip-head {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+.trip-head .trip-price {
+  margin-left: 6px;
+}
+.trip-actions {
+  flex-basis: auto;
+  margin: 0 0 0 auto;
+  flex-wrap: nowrap;
+}
+@media (max-width: 600px) {
+  .trip-actions .btn-label {
+    display: none;
+  }
+  .trip-actions .btn-sm {
+    width: 36px;
+    padding: 0;
+  }
+}
