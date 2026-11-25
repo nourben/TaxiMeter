@@ -25,8 +25,21 @@ test('hospitalisation : + 25 % sur les km, + 50 % à partir de 50 km', () => {
   assert.equal(total({ distanceKm: 50, ratePerKm: 1.2, hospital: true }), 95.8);
 });
 
-test('majorations cumulables : nuit + hospitalisation', () => {
-  assert.equal(total({ ...km20, night: true, hospital: true }), 53.1); // 32,20 + 4,80 + 16,10
+test('majorations cumulables : la nuit s’applique aussi à la majoration hospitalisation', () => {
+  assert.equal(total({ ...km20, night: true, hospital: true }), 55.5); // (32,20 + 4,80) × 1,5
+});
+
+test('exemples vérifiés par l’utilisateur : 30 km à 1,07 €', () => {
+  const km30 = { distanceKm: 30, ratePerKm: 1.07 };
+  assert.equal(total({ ...km30, night: true }), 61.23);
+  assert.equal(total({ ...km30, hospital: true }), 47.78);
+  assert.equal(total({ ...km30, hospital: true, night: true }), 71.67);
+  // ≥ 50 km : hospitalisation + 50 %, puis nuit
+  assert.equal(total({ distanceKm: 60, ratePerKm: 1.07, hospital: true, night: true }), 154.32); // (13 + 59,92 + 29,96) × 1,5
+});
+
+test('nuit + hospitalisation + Métropole', () => {
+  assert.equal(total({ distanceKm: 30, ratePerKm: 1.07, hospital: true, night: true, metropole: true }), 94.17); // (13 + 27,82 + 15 + 6,96) × 1,5
 });
 
 test('distance ≤ 4 km : seule la prise en charge (majorée la nuit)', () => {

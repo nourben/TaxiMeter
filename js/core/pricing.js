@@ -52,8 +52,9 @@ export function computeFare({ distanceKm, ratePerKm, night = false, hospital = f
     total += amount;
   }
   if (night) {
-    const amount = round2(socle * N.rate);
-    lines.push({ key: 'night', label: 'Nuit / week-end / férié', detail: `+ ${pctNum(N.rate)} sur le tarif socle`, amount });
+    // La nuit majore tout le montant, y compris la majoration hospitalisation (qui fait partie du tarif kilométrique)
+    const amount = round2(total * N.rate);
+    lines.push({ key: 'night', label: 'Nuit / week-end / férié', detail: `+ ${pctNum(N.rate)} sur le total`, amount });
     total += amount;
   }
 

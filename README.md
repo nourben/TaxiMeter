@@ -36,7 +36,7 @@ npm test             # tests du calcul tarifaire et du choix d'itinéraire
 ```
 socle          = 13 € (4 km inclus) + (distance − 4) × tarif km (1,07 / 1,20 / 1,22) [+ 15 € Métropole / grande ville]
 hospitalisation (aller ou retour à vide) : + 25 % du coût des km, + 50 % à partir de 50 km
-nuit / week-end / férié                  : + 50 % du socle
+nuit / week-end / férié                  : + 50 % du total (socle + majoration hospitalisation)
 transport partagé (2 / 3 / 4+ patients)  : − 23 % / − 35 % / − 37 % sur chaque trajet (− 5 % : patient seul ≥ 30 km)
 ```
 

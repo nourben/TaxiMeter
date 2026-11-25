@@ -13,7 +13,7 @@ export const INFO_CONTENT = {
     <p>Le bouton Google Maps ouvre l’itinéraire : relevez les km et saisissez-les. Plus tard, l’API remplira la distance et le temps de trajet ; la distance restera modifiable (↺ pour revenir à la valeur calculée).</p>
     <p>Les <strong>${t.includedKm} premiers km</strong> sont compris dans la prise en charge de ${n(t.pickup)} €.</p>`,
   nuit: `
-    <p><strong>+ ${n(t.majorations.night.rate * 100)} %</strong> sur l’ensemble du tarif socle (prise en charge, forfait grande ville et kilomètres).</p>
+    <p><strong>+ ${n(t.majorations.night.rate * 100)} %</strong> sur l’ensemble du montant : prise en charge, forfait grande ville et kilomètres, majoration hospitalisation comprise.</p>
     <p>S’applique la nuit (${t.majorations.night.startHour} h – ${t.majorations.night.endHour} h), du samedi ${t.majorations.night.saturdayFromHour} h au dimanche soir et les jours fériés. À activer à la main selon l’heure de la course.</p>
     <p>Cumulable avec la majoration hospitalisation.</p>`,
   hospital: `

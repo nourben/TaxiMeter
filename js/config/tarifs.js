@@ -17,10 +17,12 @@ export const TARIFS = {
 
   /**
    * Majorations de la convention-cadre taxis (JO du 8 août 2025), indépendantes et cumulables :
-   * - nuit / week-end / férié : + 50 % sur l'ensemble du tarif socle (prise en charge, grande ville, kilomètres)
+   * - nuit / week-end / férié : + 50 % sur l'ensemble du montant (prise en charge, grande ville, kilomètres
+   *   y compris leur majoration hospitalisation)
    *   Nuit = de 20 h à 8 h ; week-end = du samedi 12 h au dimanche minuit ; jours fériés.
    * - hospitalisation avec aller ou retour à vide : + 25 % sur le tarif kilométrique, + 50 % à partir de 50 km.
    * Exemples (20 km à 1,20 €) : hospitalisation 37,00 € · nuit 48,30 € · grande ville seule 47,20 €.
+   * Exemples (30 km à 1,07 €) : nuit 61,23 € · hospitalisation 47,78 € · hospitalisation + nuit 71,67 €.
    */
   majorations: {
     night: { label: 'Nuit / week-end / férié', rate: 0.5, startHour: 20, endHour: 8, saturdayFromHour: 12 },
