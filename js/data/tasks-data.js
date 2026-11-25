@@ -13,7 +13,7 @@ export const TASKS = [
   // ---------- Fait ----------
   { status: 'done', area: 'Interface', title: 'Module Trajet : départ / destination et distance' },
   { status: 'done', area: 'Interface', title: 'Autocomplétion des adresses et villes (IGN Géoplateforme, gratuit) ; l’adresse choisie fiabilise la détection Métropole' },
-  { status: 'done', area: 'Interface', title: 'Autocomplétion : points d’intérêt IGN en plus des adresses (hôpitaux, cliniques, gares, mairies…)' },
+  { status: 'done', area: 'Interface', title: 'Autocomplétion : points d’intérêt IGN en plus des adresses (hôpitaux, cliniques, gares, mairies…) — vérifiée en ligne' },
   { status: 'done', area: 'Interface', title: 'Jusqu’à 20 trajets dans une même course (lien « + Ajouter un trajet »)' },
   { status: 'done', area: 'Interface', title: 'Titre « Trajet » → « Trajets » et numérotation Trajet 1, 2, 3… dès le 2e trajet' },
   { status: 'done', area: 'Interface', title: 'Bouton « Relever la distance en km sur Google Maps » à droite du départ / destination' },
@@ -37,10 +37,10 @@ export const TASKS = [
   { status: 'done', area: 'Stats', title: 'Page Statistiques : diagramme en barres jours / semaines / mois / années, branché sur Supabase' },
   { status: 'done', area: 'Supabase', title: 'Projet Supabase relié au site ; estimations enregistrées anonymement quand un prix reste affiché 3 s sans changer (règle validée)' },
   { status: 'done', area: 'Stats', title: 'Calculs de distance comptés à part (clic sur « Calculer la distance »), 2e module replié sur la page Statistiques' },
+  { status: 'done', area: 'Stats', title: 'Statistiques vérifiées en ligne avec Supabase' },
   { status: 'done', area: 'Supabase', title: 'Schéma SQL prêt et testé : estimations, statistiques par période, compteur d’appels API' },
 
   // ---------- À valider ----------
-  { status: 'check', area: 'Interface', title: 'Tester les points d’intérêt dans l’autocomplétion (hôpitaux, cliniques…)', note: 'Les villes fonctionnent en ligne. Les lieux ont été testés avec des réponses simulées au format réel de l’IGN.' },
   { status: 'check', area: 'Tarifs', title: 'Exemples jour / nuit : le coefficient ne s’applique pas au même montant', note: 'Votre exemple de jour donne 13 + 19,20 × 1,25 = 37,00 € (coefficient sur la distance), alors que celui de nuit donne (13 + 19,20) × 1,5 = 48,30 € (coefficient sur le total). Le site reproduit les deux exemples tels quels ; un seul paramètre à changer si c’est une erreur.' },
   { status: 'check', area: 'Tarifs', title: 'Exemple Métropole à 47,20 € calculé sans tarif de jour ni de nuit', note: 'Ce montant correspond à 32,20 + 15 € sans coefficient jour ni nuit. Le site applique toujours jour OU nuit, donc Métropole + jour 20 km = 52,00 € et Métropole + nuit = 63,30 €.' },
   { status: 'validate', area: 'Tarifs', title: 'Zone Métropole : rayon de 11 km autour de Notre-Dame + codes postaux 75/92/93/94', note: 'Paris – Créteil ≈ 10,4 km à vol d’oiseau. Certaines communes de petite couronne dépassent 11 km mais sont incluses par leur code postal.' },
@@ -56,6 +56,7 @@ export const TASKS = [
   { status: 'done', area: 'API itinéraire', title: 'Bouton « Calculer la distance » actif : remplit la distance (modifiable, ↺), indique si un itinéraire plus rapide est retenu' },
   { status: 'done', area: 'API itinéraire', title: 'Message si départ / destination non reconnu, quota atteint ou erreur, avec repli sur Google Maps' },
   { status: 'todo', area: 'API itinéraire', title: 'Afficher le temps de trajet estimé renvoyé par l’API', note: 'Retiré de l’interface en attendant ; la valeur est déjà prévue dans setRouteResult.' },
+  { status: 'todo', area: 'API itinéraire', title: 'Plafonner Routes API dans la console Google : 150 calculs / jour, 30 / minute, ComputeRouteMatrix à 0' },
   { status: 'check', area: 'API itinéraire', title: 'Déployer la fonction « route » dans Supabase et désactiver « Verify JWT » (étapes 8 et 9 de docs/SUPABASE.md)', note: 'Redéployer après chaque modification de supabase/functions/route/index.ts. Puis tester « Calculer la distance » sur le site en ligne.' },
 
   // ---------- Plus tard ----------
