@@ -48,6 +48,16 @@ export const TARIFS = {
   },
 };
 
+/**
+ * Transport partagé (patients transportés ensemble, convention-cadre taxis CPAM, JO du 8 août 2025) :
+ * abattement sur la totalité de chaque trajet (majorations et Métropole comprises).
+ * Un patient seul dans le véhicule sur au moins soloLong.minKm a un abattement réduit (5 %).
+ */
+export const SHARED_TRANSPORT = {
+  rates: { 2: 0.23, 3: 0.35, 4: 0.37 }, // 4 patients ou plus : 37 %
+  soloLong: { minKm: 30, rate: 0.05 },
+};
+
 /** Nombre maximum de trajets dans une même course */
 export const MAX_TRIPS = 20;
 

@@ -58,3 +58,21 @@ test('jour à partir de 50 km : coefficient × 1,5', () => {
   // la nuit n'est pas concernée : (13 + 55,20) × 1,5 = 102,30
   assert.equal(computeFare({ distanceKm: 50, ratePerKm: 1.2, period: 'nuit', metropole: false }).total, 102.3);
 });
+
+import { sharedRate, applyDiscount } from '../js/core/pricing.js';
+
+test('transport partagé : 23 % / 35 % / 37 % (4 et plus)', () => {
+  assert.equal(sharedRate(1), 0);
+  assert.equal(sharedRate(2), 0.23);
+  assert.equal(sharedRate(3), 0.35);
+  assert.equal(sharedRate(4), 0.37);
+  assert.equal(sharedRate(7), 0.37);
+});
+
+test('abattement appliqué sur le total du trajet (Métropole comprise)', () => {
+  const base = computeFare({ distanceKm: 20, ratePerKm: 1.2, period: 'jour', metropole: true }); // 52,00
+  const r = applyDiscount(base, 0.23, 'Transport partagé', '2 patients');
+  assert.equal(r.total, 40.04); // 52 − 11,96
+  assert.equal(Math.round(r.lines.reduce((s, l) => s + l.amount, 0) * 100) / 100, r.total);
+  assert.equal(applyDiscount(base, 0.05, 'x', 'y').total, 49.4);
+});

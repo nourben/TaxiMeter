@@ -1,5 +1,5 @@
-import { TARIFS, MAX_TRIPS } from '../config/tarifs.js';
-import { computeFare, formatEuro, round2 } from '../core/pricing.js';
+import { TARIFS, MAX_TRIPS, SHARED_TRANSPORT } from '../config/tarifs.js';
+import { computeFare, formatEuro, round2, sharedRate, applyDiscount } from '../core/pricing.js';
 import { periodForDate } from '../core/period.js';
 import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
@@ -23,6 +23,9 @@ const el = {
   priceNote: $('price-note'),
   priceList: $('price-list'),
   reset: $('reset-form'),
+  sharedRow: $('shared-row'),
+  shared: $('shared'),
+  sharedDetail: $('shared-detail'),
   toast: $('toast'),
 };
 
@@ -45,13 +48,14 @@ function newTrip() {
     metropole: null,
     rate: TARIFS.defaultRatePerKm,
     excluded: false,
+    soloLong: false,
     calculating: false,
     routeMsg: null,
     geo: { origin: null, destination: null },
   };
 }
 
-const state = { trips: [newTrip()], openFares: new Set() };
+const state = { trips: [newTrip()], openFares: new Set(), shared: true };
 
 /* ---------- Calculs dérivés ---------- */
 
@@ -89,11 +93,28 @@ function effectiveMetro(t) {
   return t.metropole ?? detectMetro(t).inZone;
 }
 
+/** Transport partagé : nombre de patients (trajets inclus avec une distance) et taux d'abattement. */
+function sharedContext() {
+  const patients = state.trips.filter((t) => !t.excluded && readKm(t.distance) != null).length;
+  return { patients, rate: state.shared ? sharedRate(patients) : 0 };
+}
+
+const pct = (rate) => `${Math.round(rate * 100)} %`;
+
 function fareOf(t) {
   const distanceKm = readKm(t.distance);
   if (distanceKm == null) return null;
-  const params = { distanceKm, ratePerKm: t.rate, period: effectivePeriod(t), metropole: effectiveMetro(t) };
-  return { params, fare: computeFare(params) };
+  const params = { distanceKm, ratePerKm: t.rate, period: effectivePeriod(t), metropole: effectiveMetro(t), discount: 0 };
+  let fare = computeFare(params);
+  const ctx = sharedContext();
+  if (!t.excluded && ctx.rate) {
+    const solo = t.soloLong && distanceKm >= SHARED_TRANSPORT.soloLong.minKm;
+    params.discount = solo ? SHARED_TRANSPORT.soloLong.rate : ctx.rate;
+    fare = solo
+      ? applyDiscount(fare, params.discount, 'Patient seul ≥ 30 km', `− ${pct(params.discount)} (transport partagé)`)
+      : applyDiscount(fare, params.discount, 'Transport partagé', `− ${pct(params.discount)} (${ctx.patients} patients)`);
+  }
+  return { params, fare };
 }
 
 /* ---------- Rendu d'un trajet (créé une fois, puis mis à jour) ---------- */
@@ -175,6 +196,13 @@ function tripTemplate(t) {
         <div class="opt-row opt-rate">
           <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Tarif kilométrique">${rates}</div>
           <p class="trip-hint opt-side hidden" data-o="hint-rate"></p>
+        </div>
+        <div class="opt-row opt-solo hidden" data-o="solo-row">
+          <label class="chip opt-wide solo-chip">
+            <input type="checkbox" data-f="soloLong" />
+            <span>Patient seul sur 30 km ou plus (− 5 %)</span>
+          </label>
+          <button class="info-btn" data-info="partage" aria-label="Aide sur le transport partagé">i</button>
         </div>
       </div>
     </div>`;
@@ -288,6 +316,16 @@ function updateTrip(t, index, count) {
   o('hint-metro').innerHTML = metroText;
   o('metro-auto').classList.toggle('hidden', t.metropole == null);
 
+  const ctxShared = sharedContext();
+  const soloRow = o('solo-row');
+  soloRow.classList.toggle('hidden', !(ctxShared.rate && !t.excluded));
+  const soloInput = soloRow.querySelector('[data-f="soloLong"]');
+  const longEnough = (readKm(t.distance) ?? 0) >= SHARED_TRANSPORT.soloLong.minKm;
+  soloInput.checked = t.soloLong && longEnough;
+  soloInput.disabled = !longEnough;
+  soloRow.querySelector('.solo-chip').classList.toggle('is-disabled', !longEnough);
+  soloRow.querySelector('.solo-chip').classList.toggle('is-on', t.soloLong && longEnough);
+
   const rateHint = o('hint-rate');
   const nonDefault = t.rate !== TARIFS.defaultRatePerKm;
   rateHint.classList.toggle('hidden', !nonDefault);
@@ -308,7 +346,7 @@ function breakdownTable(fare) {
   const rows = fare.lines
     .map(
       (l) =>
-        `<tr><td>${l.label}<span class="detail">${l.detail}</span></td><td>${l.key === 'pickup' || l.key === 'distance' ? '' : '+ '}${formatEuro(l.amount)}</td></tr>`,
+        `<tr${l.key === 'discount' ? ' class="discount"' : ''}><td>${l.label}<span class="detail">${l.detail}</span></td><td>${l.key === 'discount' ? '− ' + formatEuro(-l.amount) : (l.key === 'pickup' || l.key === 'distance' ? '' : '+ ') + formatEuro(l.amount)}</td></tr>`,
     )
     .join('');
   return `<table class="breakdown"><tbody>${rows}</tbody></table>`;
@@ -318,6 +356,7 @@ function summaryLabel(params) {
   const bits = [`${num(params.distanceKm)} km`, TARIFS.periods[params.period].label];
   if (params.metropole) bits.push('Métropole');
   if (params.ratePerKm !== TARIFS.defaultRatePerKm) bits.push(`${num(params.ratePerKm.toFixed(2))} €/km`);
+  if (params.discount) bits.push(`− ${pct(params.discount)}`);
   return bits.join(' · ');
 }
 
@@ -353,6 +392,11 @@ function renderPrice() {
   el.priceNote.textContent = notes.length ? `Non compté${missing + excludedCount > 1 ? 's' : ''} : ${notes.join(', ')}.` : '';
 
   logEstimate(valid, total);
+
+  const ctx = sharedContext();
+  el.sharedRow.classList.toggle('hidden', ctx.patients < 2);
+  el.shared.checked = state.shared;
+  el.sharedDetail.textContent = ctx.patients >= 2 ? `${ctx.patients} patients ensemble : − ${pct(sharedRate(ctx.patients))} sur chaque trajet` : '';
 
   if (!valid.length) {
     el.priceList.innerHTML = '<p class="empty-state">Indiquez la distance pour obtenir le prix.</p>';
@@ -466,6 +510,7 @@ function bind() {
     if (!t) return;
     if (f === 'period') t.period = e.target.value;
     else if (f === 'rate') t.rate = Number(e.target.value);
+    else if (f === 'soloLong') t.soloLong = e.target.checked;
     else return;
     update();
   });
@@ -528,6 +573,10 @@ function bind() {
   );
 
   el.add.addEventListener('click', addTrip);
+  el.shared.addEventListener('change', () => {
+    state.shared = el.shared.checked;
+    update();
+  });
   el.reset.addEventListener('click', resetAll);
 
   // L'horaire automatique suit l'heure courante

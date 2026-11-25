@@ -21,6 +21,10 @@ export const INFO_CONTENT = {
   metropole: `
     <p>+ ${n(t.metropole.supplement)} €, cumulable avec jour ou nuit.</p>
     <p>Auto si le départ ou la destination est à moins de ${t.metropole.radiusKm} km à vol d’oiseau du centre de Paris (≈ Paris – Créteil) ou en ${t.metropole.departments.join(', ')}. Modifiable à la main.</p>`,
+  partage: `
+    <p><strong>Transport partagé</strong> (patients transportés ensemble) : chaque trajet reçoit un abattement de 23 % pour 2 patients, 35 % pour 3, 37 % pour 4 ou plus, sur la totalité de son prix.</p>
+    <p>Un patient <strong>seul dans le véhicule sur 30 km ou plus</strong> n’a qu’un abattement de 5 %, sur sa facture uniquement.</p>
+    <p>Source : convention-cadre nationale des taxis conventionnés (JO du 8 août 2025).</p>`,
 };
 
 let counter = 0;

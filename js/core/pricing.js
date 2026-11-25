@@ -1,4 +1,4 @@
-import { TARIFS } from '../config/tarifs.js';
+import { TARIFS, SHARED_TRANSPORT } from '../config/tarifs.js';
 
 /** Arrondi au centime, sans erreurs de flottants (ex. 0,1 + 0,2). */
 export function round2(value) {
@@ -77,4 +77,26 @@ function fmtKm(n) {
 /** Format monétaire français : 37,00 € */
 export function formatEuro(amount) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+}
+
+/** Taux d'abattement « transport partagé » selon le nombre de patients (0 si un seul). */
+export function sharedRate(patients, cfg = SHARED_TRANSPORT) {
+  if (patients < 2) return 0;
+  const keys = Object.keys(cfg.rates).map(Number).sort((a, b) => a - b);
+  const key = keys.filter((k) => k <= patients).pop();
+  return cfg.rates[key];
+}
+
+/**
+ * Applique un abattement (ex. 0.23) au prix d'un trajet : ajoute une ligne négative et recalcule le total.
+ * @returns {{ total:number, lines:Array, billableKm:number }}
+ */
+export function applyDiscount(fare, rate, label, detail) {
+  if (!rate) return fare;
+  const amount = -round2(fare.total * rate);
+  return {
+    ...fare,
+    lines: [...fare.lines, { key: 'discount', label, detail, amount }],
+    total: round2(fare.total + amount),
+  };
 }
