@@ -15,29 +15,29 @@
     <header id="site-header"></header>
     <main>
       <h1 class="page-title">Statistiques</h1>
-      <div id="stats-empty" class="card empty-state hidden">
-        Le suivi des courses arrivera plus tard (enregistrement et comptes utilisateurs).<br /><a href="index.html">Estimer une course</a>
-      </div>
-      <div id="stats-content" class="hidden">
-        <div class="stats-grid">
-          <div class="stat"><div class="label">Courses</div><div class="value" id="stat-count">0</div></div>
-          <div class="stat"><div class="label">Montant total</div><div class="value" id="stat-revenue">—</div></div>
-          <div class="stat"><div class="label">Prix moyen</div><div class="value" id="stat-avg">—</div></div>
-          <div class="stat"><div class="label">Distance totale</div><div class="value" id="stat-km">—</div></div>
-        </div>
-        <p class="hint" id="stat-split" style="margin:-4px 0 14px"></p>
-        <section class="card">
-          <div class="card-head"><h2>Dernières courses</h2></div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Date</th><th>Trajet</th><th class="num">km</th><th>Tarif</th><th class="num">Prix</th></tr></thead>
-              <tbody id="stat-rows"></tbody>
-            </table>
+
+      <section class="card" aria-labelledby="h-chart">
+        <div class="card-head">
+          <div>
+            <h2 id="h-chart">Estimations réalisées</h2>
+            <p class="muted small" id="chart-caption" style="margin:2px 0 0"></p>
           </div>
-        </section>
-        <button type="button" class="btn btn-block" id="stats-clear">Effacer l’historique</button>
-        <p class="hint" style="text-align:center">Données stockées sur cet appareil uniquement, en attendant la base en ligne.</p>
-      </div>
+        </div>
+
+        <div class="segmented seg-sm chart-switch" role="radiogroup" aria-label="Période" id="granularity"></div>
+
+        <div class="stat-row" id="stat-row"></div>
+
+        <div class="chart" id="chart" role="img" aria-labelledby="h-chart chart-caption"></div>
+        <div class="chart-tip hidden" id="chart-tip" role="status"></div>
+
+        <details class="chart-table">
+          <summary>Voir le tableau</summary>
+          <table class="data-table"><thead><tr><th>Période</th><th class="num">Estimations</th></tr></thead><tbody id="chart-rows"></tbody></table>
+        </details>
+
+        <p class="demo-note hidden" id="demo-note">Données fictives pour l’aperçu : les vrais chiffres arriveront avec Supabase.</p>
+      </section>
     </main>
     <footer id="site-footer"></footer>
     <script type="module" src="js/ui/layout.js"></script>
