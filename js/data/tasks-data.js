@@ -52,7 +52,7 @@ export const TASKS = [
   // ---------- À faire (prochaine étape) ----------
   { status: 'done', area: 'API itinéraire', title: 'Clé Google Routes API créée et rangée dans les secrets Supabase' },
   { status: 'done', area: 'API itinéraire', title: 'Fonction serveur « route » : Google Routes (trafic + alternatives), règle du plus court / alternative ≤ +10 km' },
-  { status: 'done', area: 'API itinéraire', title: 'Garde-fou : compteur mensuel des calculs dans Supabase (table api_usage), calcul refusé au-delà de 4 500 par mois ; carte bancaire virtuelle à montant limité' },
+  { status: 'done', area: 'API itinéraire', title: 'Garde-fou : compteur mensuel des calculs dans Supabase (table api_usage), calcul refusé au-delà de 4 600 par mois ; carte bancaire virtuelle à montant limité' },
   { status: 'done', area: 'API itinéraire', title: 'Bouton « Calculer la distance » actif : remplit la distance (modifiable, ↺), indique si un itinéraire plus rapide est retenu' },
   { status: 'done', area: 'API itinéraire', title: 'Message si départ / destination non reconnu, quota atteint ou erreur, avec repli sur Google Maps' },
   { status: 'todo', area: 'API itinéraire', title: 'Afficher le temps de trajet estimé renvoyé par l’API', note: 'Retiré de l’interface en attendant ; la valeur est déjà prévue dans setRouteResult.' },

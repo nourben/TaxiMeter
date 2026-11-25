@@ -7,7 +7,7 @@
 //
 // Secrets (Supabase → Edge Functions → Secrets) :
 //   GOOGLE_MAPS_API_KEY   (obligatoire)
-//   GOOGLE_MONTHLY_LIMIT  (facultatif, 4500 par défaut : sous les 5 000 appels gratuits du niveau Pro)
+//   GOOGLE_MONTHLY_LIMIT  (facultatif, 4600 par défaut : sous les 5 000 appels gratuits du niveau Pro)
 // Le compteur (table api_usage, mois en heure de Paris) bloque les calculs au-delà de la limite,
 // puisque les quotas de la console Google ne sont pas modifiables pendant l'essai gratuit.
 // SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis automatiquement par Supabase.
@@ -97,7 +97,7 @@ async function handle(req: Request): Promise<Response> {
   if (!apiKey) return json({ error: 'not_configured', message: 'Clé Google absente.' }, 500, origin);
 
   // Garde-fou : on bloque avant la limite gratuite (le compteur inclut cet appel)
-  const limit = Number(Deno.env.get('GOOGLE_MONTHLY_LIMIT') ?? 4500);
+  const limit = Number(Deno.env.get('GOOGLE_MONTHLY_LIMIT') ?? 4600);
   const calls = await incrementUsage();
   if (calls == null) return json({ error: 'usage_unavailable', message: 'Compteur indisponible, calcul bloqué par sécurité.' }, 503, origin);
   if (calls > limit) return json({ error: 'quota', message: 'Quota mensuel de calculs atteint.' }, 429, origin);
