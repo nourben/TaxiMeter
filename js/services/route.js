@@ -5,7 +5,7 @@ import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../config/supabase.js';
 export class RouteError extends Error {
   constructor(code, message) {
     super(message);
-    this.code = code; // 'not_found' | 'quota' | 'network' | 'error'
+    this.code = code; // 'not_found' | 'quota' | 'rate_limited' | 'network' | 'error'
   }
 }
 
@@ -28,6 +28,6 @@ export async function computeRoute(origin, destination) {
   const data = await res.json().catch(() => ({}));
   if (res.ok) return data;
   if (res.status === 422) throw new RouteError('not_found', data.message);
-  if (res.status === 429) throw new RouteError('quota', data.message);
+  if (res.status === 429) throw new RouteError(data.error === 'rate_limited' ? 'rate_limited' : 'quota', data.message);
   throw new RouteError('error', data.message || `Erreur ${res.status}`);
 }

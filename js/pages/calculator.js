@@ -636,6 +636,7 @@ async function calculateDistance(t) {
     const text = {
       not_found: 'Départ ou destination non reconnu : vérifiez l’adresse ou relevez la distance sur Google Maps.',
       quota: 'Limite mensuelle de calculs atteinte : relevez la distance sur Google Maps.',
+      rate_limited: `${err.message} En attendant, relevez la distance sur Google Maps.`,
     }[err.code] ?? 'Calcul impossible pour le moment : relevez la distance sur Google Maps.';
     t.routeMsg = { text, error: true };
     t.calculating = false;

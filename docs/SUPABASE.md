@@ -9,6 +9,7 @@
 | `api_usage` + `increment_api_usage(provider)` | table + fonction SQL | fonction `route` uniquement | compteur mensuel d'appels Google : la fonction refuse les calculs au-delà de la limite (4 600 par défaut) |
 | `contact_messages` + `contact_recent_count(ip_hash)` | table + fonction SQL | fonction `contact` uniquement | messages du formulaire de contact ; limite de 5 messages par heure et par adresse IP (hachée) |
 | `contact` | Edge Function ([`supabase/functions/contact/index.ts`](../supabase/functions/contact/index.ts)) | page Contact | contrôle anti-robot, enregistre le message, envoie l'e-mail via Resend |
+| `route_calls`, `route_violations`, `route_blocks`, `route_cache` + `route_rate_check(ip_hash)` | tables + fonction SQL | fonction `route` uniquement | limite par appareil (10 / min, 60 / h, 200 / 24 h, blocage 24 h après 3 dépassements) et cache de 24 h des itinéraires |
 | `route` | Edge Function ([`supabase/functions/route/index.ts`](../supabase/functions/route/index.ts)) | bouton « Calculer la distance » | appelle Google Routes avec la clé secrète, retient l'itinéraire le plus court en km, renvoie distance et durée |
 
 Le schéma SQL est dans [`supabase/migrations/`](../supabase/migrations/), à exécuter dans l'ordre : `0001_init.sql`, `0002_distance_calculations.sql`, puis `0003_route_counter_grant.sql` (testés sur PostgreSQL 16).
@@ -59,3 +60,10 @@ En-têtes : `apikey: <clé publique>` (+ `Authorization: Bearer <clé publique>`
 
 - **Déjà en place, sans réglage** : champ piège invisible pour les robots, délai minimum de 3 s pour remplir le formulaire, 5 messages maximum par heure et par adresse IP, pièce jointe limitée à 5 Mo (PDF ou image).
 - **Facultatif, si du spam passe quand même** : Cloudflare Turnstile (gratuit, sans puzzle à résoudre la plupart du temps). Créer un widget sur dash.cloudflare.com → Turnstile avec le domaine `nourben.github.io`, mettre la **clé de site** dans `js/config/supabase.js` (`TURNSTILE_SITE_KEY`) et la **clé secrète** dans le secret Supabase `TURNSTILE_SECRET`.
+
+## Limite des calculs de distance par appareil
+
+1. SQL Editor → coller `supabase/migrations/0005_route_rate_limit.sql` → Run.
+2. Redéployer la fonction `route` avec le nouveau `supabase/functions/route/index.ts` (Verify JWT reste désactivé).
+
+Pour débloquer un appareil : Table Editor → `route_blocks` → supprimer la ligne (les IP sont hachées, on ne peut pas savoir à qui elles appartiennent).
