@@ -63,7 +63,7 @@ function setupModule(root) {
       ? `
       <div><span class="stat-value">${fmt(current.count)}</span><span class="stat-label">visiteurs ${nowLabel}</span></div>
       <div><span class="stat-value">${fmt(current.returning)}</span><span class="stat-label">dont déjà venus</span></div>
-      <div><span class="stat-value">${fmt(Math.round(total / data.length))}</span><span class="stat-label">en moyenne par ${UNIT[granularity]}</span></div>`
+      <div><span class="stat-value">${fmt(current.views)}</span><span class="stat-label">pages vues ${nowLabel}</span></div>`
       : `
       <div><span class="stat-value">${fmt(total)}</span><span class="stat-label">au total</span></div>
       <div><span class="stat-value">${fmt(Math.round(total / data.length))}</span><span class="stat-label">en moyenne par ${UNIT[granularity]}</span></div>
@@ -89,10 +89,11 @@ function setupModule(root) {
     chart.setAttribute('aria-label', `${words[1]} par ${UNIT[granularity]}, ${g.caption}`);
     chart.innerHTML = `<div class="chart-plot">${grid}<div class="chart-cols">${bars}</div></div>`;
 
-    r('rows').innerHTML = data
+    r('rows').innerHTML = [...data]
+      .reverse()
       .map(
         (d) =>
-          `<tr><td>${d.long}${d.current ? ' (en cours)' : ''}</td><td class="num">${fmt(d.count)}</td>${
+          `<tr><td><span class="d-long">${d.long}${d.current ? ' (en cours)' : ''}</span><span class="d-short">${d.short}${d.current ? ' •' : ''}</span></td><td class="num">${fmt(d.count)}</td>${
             visitors ? `<td class="num">${fmt(d.returning)}</td><td class="num">${fmt(d.views)}</td>` : ''
           }</tr>`,
       )

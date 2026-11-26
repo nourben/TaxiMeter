@@ -75,7 +75,7 @@ Pour débloquer un appareil : Table Editor → `route_blocks` → supprimer la l
 
 Effets :
 - dès que l'e-mail est parti, le contenu du message est effacé de `contact_messages` (il reste date + empreinte d'IP, supprimées après 1 jour) ; en cas d'échec d'envoi, le message est gardé 30 jours au maximum ;
-- table `visits` : une ligne par page affichée (identifiant aléatoire du navigateur, renouvelé tous les 13 mois, données purgées après 25 mois). Statistiques via `visits_per_period` et `visitor_frequency`. Refus possible depuis la page Confidentialité.
+- table `visits` : une ligne par page affichée (identifiant aléatoire du navigateur, renouvelé tous les 13 mois, données purgées après 25 mois). Statistiques via `visits_per_period` et `visitor_frequency`. Refus possible depuis la page Mentions légales (section confidentialité).
 
 ## Empreintes d'IP avec clé secrète
 

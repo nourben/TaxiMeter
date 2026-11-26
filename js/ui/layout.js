@@ -9,9 +9,7 @@ const ICON_SUN =
 
 const FOOTER_LINKS = [
   { href: 'stats.html', label: 'Statistiques' },
-  { href: 'cgu.html', label: 'CGU' },
   { href: 'mentions-legales.html', label: 'Mentions légales' },
-  { href: 'confidentialite.html', label: 'Confidentialité' },
   { href: 'contact.html', label: 'Contact' },
 ];
 
