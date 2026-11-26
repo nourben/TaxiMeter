@@ -1588,3 +1588,14 @@ input:focus {
     display: inline;
   }
 }
+
+/* Pièce jointe + bouton Retirer */
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.file-row input[type='file'] {
+  flex: 1;
+  min-width: 0;
+}

@@ -37,6 +37,17 @@ function validate() {
   return null;
 }
 
+// Bouton « Retirer » à côté de la pièce jointe
+const fileInput = $('c-file');
+const fileClear = $('c-file-clear');
+const syncFileClear = () => fileClear.classList.toggle('hidden', !fileInput.files.length);
+fileInput.addEventListener('change', syncFileClear);
+fileClear.addEventListener('click', () => {
+  fileInput.value = '';
+  syncFileClear();
+  fileInput.focus();
+});
+
 form.addEventListener('input', () => {
   if (msg.classList.contains('is-error')) show('', 'hidden');
 });
@@ -61,6 +72,7 @@ form.addEventListener('submit', async (e) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || 'Envoi impossible pour le moment.');
     form.reset();
+    syncFileClear();
     $('c-started').value = String(Date.now());
     if (window.turnstile) window.turnstile.reset();
     show('Merci, votre message a bien été envoyé. Nous vous répondrons rapidement.', 'is-ok');

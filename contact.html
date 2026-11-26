@@ -50,7 +50,13 @@
 
         <div class="field">
           <label for="c-file">Pièce jointe <span class="muted">(facultatif : PDF ou image, 5 Mo max.)</span></label>
-          <input type="file" id="c-file" name="attachment" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif" />
+          <div class="file-row">
+            <input type="file" id="c-file" name="attachment" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif" />
+            <button type="button" class="btn btn-sm btn-ghost hidden" id="c-file-clear" aria-label="Retirer la pièce jointe">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              Retirer
+            </button>
+          </div>
         </div>
 
         <!-- Piège à robots : champ invisible pour un humain -->
@@ -63,7 +69,6 @@
 
         <p class="form-msg hidden" id="c-msg" role="status"></p>
         <button type="submit" class="btn btn-primary btn-block" id="c-submit">Envoyer</button>
-        <p class="hint" style="text-align:center">Vos coordonnées servent uniquement à vous répondre. Le message est effacé de notre base dès son envoi (<a href="confidentialite.html">confidentialité</a>).</p>
       </form>
     </main>
     <footer id="site-footer"></footer>
