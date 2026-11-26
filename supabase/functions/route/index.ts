@@ -6,11 +6,13 @@
 // Erreurs : 400 requête invalide · 422 adresse non trouvée · 429 trop de calculs (par appareil) ou quota mensuel atteint
 //           · 502 Google indisponible
 // Protection : 10 calculs / minute, 60 / heure, 200 / 24 h par adresse IP (hachée), blocage de 24 h après
-// 3 dépassements (SQL 0005) ; cache de 24 h pour un même départ / destination (pas de nouvel appel à Google).
+// 3 dépassements (SQL 0005) ; cache pour un même départ / destination (pas de nouvel appel à Google),
+// 24 h par défaut, réglable avec le secret ROUTE_CACHE_HOURS (0 = pas de cache, 720 h = 30 jours maximum).
 //
 // Secrets (Supabase → Edge Functions → Secrets) :
 //   GOOGLE_MAPS_API_KEY   (obligatoire)
 //   GOOGLE_MONTHLY_LIMIT  (facultatif, 4600 par défaut : sous les 5 000 appels gratuits du niveau Pro)
+//   ROUTE_CACHE_HOURS     (facultatif, 24 par défaut) durée du cache des itinéraires, de 0 à 720 h
 //   IP_HASH_SALT          (recommandé) secret aléatoire pour les empreintes d'IP, même valeur que pour « contact »
 // Le compteur (table api_usage, mois en heure de Paris) bloque les calculs au-delà de la limite,
 // puisque les quotas de la console Google ne sont pas modifiables pendant l'essai gratuit.
@@ -149,16 +151,19 @@ async function handle(req: Request): Promise<Response> {
     return json({ error: 'usage_unavailable', message: 'Contrôle indisponible, calcul bloqué par sécurité.' }, 503, origin);
   }
 
-  // Cache : même départ et même destination dans les dernières 24 h → pas d'appel à Google
+  // Cache : même départ et même destination récemment calculés → pas d'appel à Google
   const cacheKey = `${placeKey(body.origin as Place)}|${placeKey(body.destination as Place)}`;
-  try {
-    const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const cacheHours = Math.min(Math.max(Number(Deno.env.get('ROUTE_CACHE_HOURS') ?? 24) || 0, 0), 720);
+  if (cacheHours > 0) {
+    try {
+    const since = new Date(Date.now() - cacheHours * 3600 * 1000).toISOString();
     const hit = await serviceRpc(`route_cache?key=eq.${encodeURIComponent(cacheKey)}&created_at=gte.${since}&select=distance_km,duration_min`, undefined);
     if (Array.isArray(hit) && hit.length) {
       return json({ distanceKm: Number(hit[0].distance_km), durationMin: Number(hit[0].duration_min), cached: true }, 200, origin);
     }
   } catch {
     /* cache indisponible : on continue sans */
+  }
   }
 
   // Garde-fou : on bloque avant la limite gratuite (le compteur inclut cet appel)
@@ -214,7 +219,7 @@ async function handle(req: Request): Promise<Response> {
   }
 
   const route = selectRoute(routes);
-  await serviceRpc('route_cache', { key: cacheKey, distance_km: route.distanceKm, duration_min: route.durationMin, created_at: new Date().toISOString() }).catch(() => {});
+  if (cacheHours > 0) await serviceRpc('route_cache', { key: cacheKey, distance_km: route.distanceKm, duration_min: route.durationMin, created_at: new Date().toISOString() }).catch(() => {});
   return json({ distanceKm: route.distanceKm, durationMin: route.durationMin, routes }, 200, origin);
 }
 

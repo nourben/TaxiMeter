@@ -8,6 +8,25 @@ import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimat
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
 
+const RATE_KEY = 'taximeter.rate';
+/** Dernier tarif au km choisi, mémorisé dans le navigateur. */
+function preferredRate() {
+  try {
+    const r = Number(localStorage.getItem(RATE_KEY));
+    if (TARIFS.ratesPerKm.includes(r)) return r;
+  } catch {
+    /* stockage indisponible */
+  }
+  return TARIFS.defaultRatePerKm;
+}
+function savePreferredRate(r) {
+  try {
+    localStorage.setItem(RATE_KEY, String(r));
+  } catch {
+    /* navigation privée : non mémorisé */
+  }
+}
+
 const $ = (id) => document.getElementById(id);
 const num = (s) => String(s).replace('.', ',');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -45,7 +64,7 @@ function newTrip() {
     night: false,
     hospital: false,
     metropole: null,
-    rate: TARIFS.defaultRatePerKm,
+    rate: preferredRate(),
     excluded: false,
     soloLong: false,
     copiedFromFirst: false,
@@ -521,7 +540,10 @@ function bind() {
     const t = tripFromEvent(e);
     const f = e.target.dataset.f;
     if (!t) return;
-    if (f === 'rate') t.rate = Number(e.target.value);
+    if (f === 'rate') {
+      t.rate = Number(e.target.value);
+      savePreferredRate(t.rate);
+    }
     else if (f === 'soloLong') t.soloLong = e.target.checked;
     else return;
     update();

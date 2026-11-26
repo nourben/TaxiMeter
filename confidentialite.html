@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Politique de confidentialité — TaxiMeter</title>
+    <meta name="theme-color" content="#f5b400" />
+    <script>
+      try { if (localStorage.getItem('taximeter.theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23f5b400'/><text x='16' y='21' font-family='Arial' font-size='12' font-weight='800' text-anchor='middle' fill='%231b1b1f'>TX</text></svg>" />
+  </head>
+  <body>
+    <header id="site-header"></header>
+    <main>
+      <article class="prose">
+        <h1 class="page-title">Politique de confidentialité</h1>
+        <p class="muted small">Dernière mise à jour : 26 novembre 2026</p>
+
+        <h2>Responsable du traitement</h2>
+        <p>L’éditeur du site, particulier agissant à titre non professionnel, joignable par le <a href="contact.html">formulaire de contact</a>.</p>
+
+        <h2>En résumé</h2>
+        <ul>
+          <li>Pas de compte, pas de cookie publicitaire, pas de revente de données.</li>
+          <li>Les adresses saisies ne sont pas conservées.</li>
+          <li>Les messages du formulaire de contact sont effacés de la base dès qu’ils ont été transmis par e-mail (le service d’envoi en garde une copie 30 jours).</li>
+        </ul>
+
+        <h2>1. Limitation des abus</h2>
+        <p><strong>Données :</strong> adresse IP, transformée immédiatement en empreinte chiffrée avec une clé secrète ; l’adresse IP elle-même n’est jamais enregistrée.<br />
+        <strong>Usage :</strong> limiter le nombre de calculs de distance et de messages par appareil.<br />
+        <strong>Base légale :</strong> intérêt légitime (protéger le service et son coût).<br />
+        <strong>Durée :</strong> 2 jours au maximum.<br />
+        Cette empreinte ne permet pas à l’éditeur de retrouver qui vous êtes ni de relier ces données à une demande de votre part.</p>
+
+        <h2>2. Formulaire de contact</h2>
+        <p><strong>Données :</strong> nom (facultatif), e-mail ou téléphone, sujet, message, pièce jointe éventuelle.<br />
+        <strong>Usage :</strong> vous répondre (<a href="contact.html">formulaire de contact</a>).<br />
+        <strong>Base légale :</strong> votre demande (intérêt légitime à y répondre).<br />
+        <strong>Durée :</strong> le message transite par la base de données le temps de l’envoi, puis son contenu y est effacé. Il n’y reste qu’en cas d’échec d’envoi, 30 jours au maximum. L’e-mail reçu par l’éditeur est supprimé une fois votre demande traitée. Le service d’envoi Resend conserve de son côté une copie technique des e-mails envoyés pendant 30 jours, puis l’efface automatiquement.</p>
+
+        <h2>3. Mesure d’audience</h2>
+        <p>Pour connaître approximativement le nombre de visiteurs et la fréquence de leurs visites, un identifiant aléatoire est enregistré dans le stockage local de votre navigateur (aucun cookie, aucun outil tiers). Il est envoyé avec la page consultée à notre base de données. Il ne contient aucune information sur vous, n’est jamais croisé avec d’autres données ni transmis à des tiers, et sert uniquement à produire des statistiques globales.<br />
+        <strong>Durée :</strong> identifiant renouvelé au bout de 13 mois ; données de visite supprimées après 25 mois.<br />
+        Cette mesure relève de l’exemption de consentement prévue par la CNIL pour la mesure d’audience. Vous pouvez la refuser à tout moment :</p>
+        <p><button type="button" class="btn btn-sm" id="audience-toggle">Ne plus être compté</button> <span class="muted small" id="audience-state" role="status"></span></p>
+
+        <h2>4. Stockage local du navigateur</h2>
+        <p>Le thème (clair/sombre), le dernier tarif au kilomètre choisi, la période choisie sur la page Statistiques et l’identifiant de mesure d’audience sont mémorisés dans votre navigateur. Vous pouvez les effacer depuis les réglages de celui-ci.</p>
+
+        <h2>5. Sous-traitants</h2>
+        <ul>
+          <li><strong>GitHub</strong> (États-Unis) : hébergement des pages du site.</li>
+          <li><strong>Supabase</strong> : base de données et fonctions serveur, hébergées dans l’Union européenne.</li>
+          <li><strong>Google</strong> (États-Unis) : calcul des distances (adresses saisies).</li>
+          <li><strong>IGN</strong> (France) : suggestions d’adresses.</li>
+          <li><strong>Resend</strong> (États-Unis) : envoi par e-mail des messages du formulaire de contact (copie conservée 30 jours).</li>
+        </ul>
+        <p>Les transferts vers les États-Unis reposent sur les garanties prévues par le RGPD (cadre de protection des données UE–États-Unis ou clauses contractuelles types).</p>
+
+        <h2>6. Vos droits</h2>
+        <p>Vous pouvez demander l’accès, la rectification ou l’effacement de vos données, ou vous opposer à leur traitement, via le <a href="contact.html">formulaire de contact</a>. Comme le site n’a pas de compte utilisateur et ne conserve que des empreintes non identifiantes, il se peut que nous ne puissions retrouver aucune donnée vous concernant. Vous pouvez aussi adresser une réclamation à la CNIL (cnil.fr).</p>
+      </article>
+    </main>
+    <footer id="site-footer"></footer>
+    <script type="module" src="js/ui/layout.js"></script>
+    <script type="module" src="js/pages/privacy.js"></script>
+  </body>
+</html>
