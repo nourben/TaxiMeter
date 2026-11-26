@@ -63,7 +63,7 @@ function renderFooter() {
           `<a href="${l.href}"${l.href === here ? ' aria-current="page"' : ''}${l.external ? ' target="_blank" rel="noopener"' : ''}>${l.label}</a>`,
       ).join('')}
     </nav>
-    <div>© ${new Date().getFullYear()} TaxiMeter · estimation indicative</div>`;
+    <div>© ${new Date().getFullYear()} TaxiMeter</div>`;
 }
 
 renderHeader();
