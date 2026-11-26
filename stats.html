@@ -16,30 +16,6 @@
     <main>
       <h1 class="page-title">Statistiques</h1>
 
-      <section class="card stats-module" data-kind="visitors" aria-labelledby="h-visitors">
-        <div class="card-head">
-          <div>
-            <h2 id="h-visitors">Visiteurs</h2>
-            <p class="muted small" data-r="caption" style="margin:2px 0 0"></p>
-          </div>
-        </div>
-          <div class="segmented seg-sm chart-switch" role="radiogroup" aria-label="Période" data-r="switch"></div>
-          <div class="stat-row" data-r="stats"></div>
-          <div class="chart" data-r="chart" role="img"></div>
-          <div class="chart-tip hidden" data-r="tip" role="status"></div>
-          <details class="chart-table">
-            <summary>Voir le tableau</summary>
-            <table class="data-table"><thead><tr><th>Période</th><th class="num">Visiteurs</th><th class="num">Déjà venus</th><th class="num">Pages vues</th></tr></thead><tbody data-r="rows"></tbody></table>
-          </details>
-          <details class="chart-table">
-            <summary>Fidélité sur 30 jours</summary>
-            <table class="data-table"><thead><tr><th>Jours de visite</th><th class="num">Visiteurs</th><th class="num">Part</th></tr></thead><tbody id="visitor-frequency"></tbody></table>
-          </details>
-          <p class="hint hidden" data-r="empty" style="text-align:center">Rien d’enregistré sur cette période.</p>
-          <p class="demo-note hidden" data-r="error">Impossible de charger les statistiques pour le moment (base de données injoignable).</p>
-          <p class="hint" style="margin-bottom:0">Comptage anonyme par navigateur : une même personne sur deux appareils compte deux fois, et ceux qui refusent la mesure ne sont pas comptés.</p>
-      </section>
-
       <section class="card stats-module" data-kind="price" aria-labelledby="h-price-stats">
         <div class="card-head">
           <div>
@@ -76,6 +52,30 @@
           </details>
           <p class="hint hidden" data-r="empty" style="text-align:center">Rien d’enregistré sur cette période.</p>
           <p class="demo-note hidden" data-r="error">Impossible de charger les statistiques pour le moment (base de données injoignable).</p>
+      </details>
+
+      <details class="card stats-module stats-collapsible" data-kind="visitors">
+        <summary class="card-head">
+          <div>
+            <h2>Visiteurs</h2>
+            <p class="muted small" data-r="caption" style="margin:2px 0 0">Visiteurs distincts et visiteurs déjà venus</p>
+          </div>
+        </summary>
+          <div class="segmented seg-sm chart-switch" role="radiogroup" aria-label="Période" data-r="switch"></div>
+          <div class="stat-row" data-r="stats"></div>
+          <div class="chart" data-r="chart" role="img"></div>
+          <div class="chart-tip hidden" data-r="tip" role="status"></div>
+          <details class="chart-table">
+            <summary>Voir le tableau</summary>
+            <table class="data-table"><thead><tr><th>Période</th><th class="num">Visiteurs</th><th class="num">Déjà venus</th><th class="num">Pages vues</th></tr></thead><tbody data-r="rows"></tbody></table>
+          </details>
+          <details class="chart-table">
+            <summary>Fidélité sur 30 jours</summary>
+            <table class="data-table"><thead><tr><th>Jours de visite</th><th class="num">Visiteurs</th><th class="num">Part</th></tr></thead><tbody id="visitor-frequency"></tbody></table>
+          </details>
+          <p class="hint hidden" data-r="empty" style="text-align:center">Rien d’enregistré sur cette période.</p>
+          <p class="demo-note hidden" data-r="error">Impossible de charger les statistiques pour le moment (base de données injoignable).</p>
+          <p class="hint" style="margin-bottom:0">Comptage anonyme par navigateur : une même personne sur deux appareils compte deux fois, et ceux qui refusent la mesure ne sont pas comptés.</p>
       </details>
     </main>
     <footer id="site-footer"></footer>

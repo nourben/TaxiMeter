@@ -23,7 +23,7 @@ function setupModule(root) {
   const storageKey = `taximeter.stats.${kind}.granularity`;
   const visitors = kind === 'visitors';
   const words = kind === 'distance' ? ['calcul', 'calculs'] : visitors ? ['visiteur', 'visiteurs'] : ['estimation', 'estimations'];
-  const fixedCaption = kind === 'distance' ? r('caption').textContent : '';
+  const fixedCaption = root.tagName === 'DETAILS' ? r('caption').textContent : '';
 
   let granularity = 'day';
   try {
@@ -149,7 +149,8 @@ document.querySelectorAll('.stats-module').forEach(setupModule);
 // Fidélité des visiteurs sur 30 jours
 const BRACKETS = { 1: '1 jour', '2-3': '2 à 3 jours', '4-9': '4 à 9 jours', '10+': '10 jours ou plus' };
 const freq = document.getElementById('visitor-frequency');
-if (freq) {
+const freqHost = freq?.closest('details.stats-module');
+function loadFrequency() {
   visitorFrequency()
     .then((rows) => {
       const total = rows.reduce((s, x) => s + x.visitors, 0);
@@ -165,4 +166,12 @@ if (freq) {
     .catch(() => {
       freq.innerHTML = '<tr><td colspan="3">Indisponible pour le moment.</td></tr>';
     });
+}
+// Chargé seulement à la première ouverture du module Visiteurs
+if (freq && freqHost) {
+  freqHost.addEventListener('toggle', function once() {
+    if (!freqHost.open) return;
+    freqHost.removeEventListener('toggle', once);
+    loadFrequency();
+  });
 }
