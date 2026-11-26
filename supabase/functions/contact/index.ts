@@ -144,9 +144,9 @@ async function handle(req: Request): Promise<Response> {
   if (!(await verifyTurnstile(str(form.get('cf-turnstile-response'), 2048), ip))) {
     return json({ error: 'captcha', message: 'Vérification anti-robot échouée, réessayez.' }, 403, origin);
   }
-  const ipHash = await ipHash('taximeter', ip);
+  const ipKey = await ipHash('taximeter', ip);
   try {
-    const recent = Number(await db('rpc/contact_recent_count', { method: 'POST', body: JSON.stringify({ p_ip_hash: ipHash }) }));
+    const recent = Number(await db('rpc/contact_recent_count', { method: 'POST', body: JSON.stringify({ p_ip_hash: ipKey }) }));
     if (recent >= MAX_PER_HOUR) return json({ error: 'rate_limited', message: 'Trop de messages envoyés, réessayez dans une heure.' }, 429, origin);
   } catch {
     return json({ error: 'server', message: 'Service momentanément indisponible.' }, 500, origin);
@@ -158,7 +158,7 @@ async function handle(req: Request): Promise<Response> {
     const rows = await db('contact_messages', {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
-      body: JSON.stringify({ name: name || null, email: email || null, phone: phone || null, subject, message, attachment_name: attachment?.filename ?? null, ip_hash: ipHash }),
+      body: JSON.stringify({ name: name || null, email: email || null, phone: phone || null, subject, message, attachment_name: attachment?.filename ?? null, ip_hash: ipKey }),
     });
     id = rows[0].id;
   } catch {
