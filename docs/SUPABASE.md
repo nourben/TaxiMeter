@@ -9,7 +9,7 @@
 | `api_usage` + `increment_api_usage(provider)` | table + fonction SQL | fonction `route` uniquement | compteur mensuel d'appels Google : la fonction refuse les calculs au-delà de la limite (4 600 par défaut) |
 | `contact_messages` + `contact_recent_count(ip_hash)` | table + fonction SQL | fonction `contact` uniquement | messages du formulaire de contact ; limite de 5 messages par heure et par adresse IP (hachée) |
 | `contact` | Edge Function ([`supabase/functions/contact/index.ts`](../supabase/functions/contact/index.ts)) | page Contact | contrôle anti-robot, enregistre le message, envoie l'e-mail via Resend |
-| `route_calls`, `route_violations`, `route_blocks`, `route_cache` + `route_rate_check(ip_hash)` | tables + fonction SQL | fonction `route` uniquement | limite par appareil (10 / min, 60 / h, 200 / 24 h, blocage 24 h après 3 dépassements) et cache de 24 h des itinéraires |
+| `route_calls`, `route_violations`, `route_blocks` + `route_rate_check(ip_hash)` | tables + fonction SQL | fonction `route` uniquement | limite par appareil (10 / min, 60 / h, 200 / 24 h, blocage 24 h après 3 dépassements) |
 | `route` | Edge Function ([`supabase/functions/route/index.ts`](../supabase/functions/route/index.ts)) | bouton « Calculer la distance » | appelle Google Routes avec la clé secrète, retient l'itinéraire le plus court en km, renvoie distance et durée |
 
 Le schéma SQL est dans [`supabase/migrations/`](../supabase/migrations/), à exécuter dans l'ordre : `0001_init.sql`, `0002_distance_calculations.sql`, puis `0003_route_counter_grant.sql` (testés sur PostgreSQL 16).
@@ -81,9 +81,6 @@ Effets :
 
 Secret `IP_HASH_SALT` (Edge Functions → Secrets) : une longue valeur aléatoire, par exemple générée avec `openssl rand -hex 32`. Redéployer ensuite `route` et `contact`. Sans ce secret, les fonctions marchent toujours mais avec une empreinte plus faible. Ne jamais le mettre dans le code ni le changer souvent (changer la valeur remet à zéro les limites en cours, sans autre effet).
 
-## Durée du cache des itinéraires (0007)
+## Pas de cache des itinéraires (0008)
 
-1. SQL Editor → coller `supabase/migrations/0007_route_cache_duration.sql` → Run (la base garde désormais les itinéraires jusqu'à 30 jours).
-2. Secret facultatif `ROUTE_CACHE_HOURS` : durée en heures pendant laquelle un même départ / destination est resservi sans appeler Google (24 par défaut, 0 = pas de cache, 720 maximum). La fonction supprime elle-même les itinéraires plus vieux que cette durée ; la purge SQL à 30 jours n'est qu'un filet de sécurité. Redéployer `route` après avoir ajouté ou modifié le secret.
-
-> Conditions Google Maps Platform (EEA, section Routes API) : seules les latitudes / longitudes peuvent être mises en cache (30 jours max). Garder une distance ou une durée en cache n'est pas explicitement autorisé : `ROUTE_CACHE_HOURS=0` pour s'y conformer strictement.
+Les conditions Google Maps Platform (EEE, section Routes API) n'autorisent à garder que les latitudes / longitudes (30 jours max), pas les distances ni les durées. Le cache a donc été retiré : `0007` l'avait rendu réglable, `0008` supprime la table `route_cache` et la purge associée. Chaque calcul de distance appelle Google ; les limites par appareil et le compteur mensuel protègent le quota.

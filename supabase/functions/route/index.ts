@@ -6,13 +6,12 @@
 // Erreurs : 400 requête invalide · 422 adresse non trouvée · 429 trop de calculs (par appareil) ou quota mensuel atteint
 //           · 502 Google indisponible
 // Protection : 10 calculs / minute, 60 / heure, 200 / 24 h par adresse IP (hachée), blocage de 24 h après
-// 3 dépassements (SQL 0005) ; cache pour un même départ / destination (pas de nouvel appel à Google),
-// 24 h par défaut, réglable avec le secret ROUTE_CACHE_HOURS (0 = pas de cache, 720 h = 30 jours maximum).
+// 3 dépassements (SQL 0005). Pas de cache des itinéraires : les conditions Google Maps Platform
+// n'autorisent à garder que les latitudes / longitudes, pas les distances ni les durées.
 //
 // Secrets (Supabase → Edge Functions → Secrets) :
 //   GOOGLE_MAPS_API_KEY   (obligatoire)
 //   GOOGLE_MONTHLY_LIMIT  (facultatif, 4600 par défaut : sous les 5 000 appels gratuits du niveau Pro)
-//   ROUTE_CACHE_HOURS     (facultatif, 24 par défaut) durée du cache des itinéraires, de 0 à 720 h
 //   IP_HASH_SALT          (recommandé) secret aléatoire pour les empreintes d'IP, même valeur que pour « contact »
 // Le compteur (table api_usage, mois en heure de Paris) bloque les calculs au-delà de la limite,
 // puisque les quotas de la console Google ne sont pas modifiables pendant l'essai gratuit.
@@ -59,14 +58,6 @@ export function selectRoute(routes: Route[]) {
   return routes.reduce((a, b) => (b.distanceKm < a.distanceKm || (b.distanceKm === a.distanceKm && b.durationMin < a.durationMin) ? b : a));
 }
 
-async function fetchDelete(path: string) {
-  const url = Deno.env.get('SUPABASE_URL');
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!url || !key) throw new Error('Supabase non configuré');
-  const res = await fetch(`${url}/rest/v1/${path}`, { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
-  if (!res.ok) throw new Error(`Base ${res.status}`);
-}
-
 async function serviceRpc(name: string, body: unknown) {
   const url = Deno.env.get('SUPABASE_URL');
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -93,12 +84,6 @@ async function ipHash(scope: string, ip: string) {
     ? await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', enc.encode(salt), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), data)
     : await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** Clé de cache : coordonnées arrondies (~10 m) si connues, sinon le texte normalisé. */
-function placeKey(p: Place) {
-  if (Number.isFinite(p?.lat) && Number.isFinite(p?.lon)) return `${(p.lat as number).toFixed(4)},${(p.lon as number).toFixed(4)}`;
-  return String(p?.label ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 const WAIT: Record<string, string> = { minute: '1 minute', hour: '1 heure', day: '24 heures', blocked: '24 heures' };
@@ -159,23 +144,6 @@ async function handle(req: Request): Promise<Response> {
     return json({ error: 'usage_unavailable', message: 'Contrôle indisponible, calcul bloqué par sécurité.' }, 503, origin);
   }
 
-  // Cache : même départ et même destination récemment calculés → pas d'appel à Google
-  const cacheKey = `${placeKey(body.origin as Place)}|${placeKey(body.destination as Place)}`;
-  const cacheHours = Math.min(Math.max(Number(Deno.env.get('ROUTE_CACHE_HOURS') ?? 24) || 0, 0), 720);
-  if (cacheHours > 0) {
-    try {
-    const since = new Date(Date.now() - cacheHours * 3600 * 1000).toISOString();
-    // Purge : les itinéraires plus vieux que la durée du cache sont supprimés (ne servent plus)
-    await fetchDelete(`route_cache?created_at=lt.${since}`).catch(() => {});
-    const hit = await serviceRpc(`route_cache?key=eq.${encodeURIComponent(cacheKey)}&created_at=gte.${since}&select=distance_km,duration_min`, undefined);
-    if (Array.isArray(hit) && hit.length) {
-      return json({ distanceKm: Number(hit[0].distance_km), durationMin: Number(hit[0].duration_min), cached: true }, 200, origin);
-    }
-  } catch {
-    /* cache indisponible : on continue sans */
-  }
-  }
-
   // Garde-fou : on bloque avant la limite gratuite (le compteur inclut cet appel)
   const limit = Number(Deno.env.get('GOOGLE_MONTHLY_LIMIT') ?? 4600);
   const calls = await incrementUsage();
@@ -229,7 +197,6 @@ async function handle(req: Request): Promise<Response> {
   }
 
   const route = selectRoute(routes);
-  if (cacheHours > 0) await serviceRpc('route_cache', { key: cacheKey, distance_km: route.distanceKm, duration_min: route.durationMin, created_at: new Date().toISOString() }).catch(() => {});
   return json({ distanceKm: route.distanceKm, durationMin: route.durationMin, routes }, 200, origin);
 }
 
