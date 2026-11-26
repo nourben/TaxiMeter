@@ -12,6 +12,7 @@
 //   CONTACT_TO_EMAIL   adresse qui reçoit les messages                         — obligatoire
 //   CONTACT_FROM_EMAIL expéditeur (par défaut « TaxiMeter <onboarding@resend.dev> »)
 //   TURNSTILE_SECRET   clé secrète Cloudflare Turnstile (anti-robot)           — facultatif
+//   IP_HASH_SALT       secret aléatoire pour les empreintes d'IP (même valeur pour route et contact) — recommandé
 // SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis automatiquement par Supabase.
 
 const ALLOWED_ORIGINS = ['https://nourben.github.io', 'http://localhost:8765', 'http://localhost:3000'];
@@ -37,8 +38,18 @@ const str = (v: FormDataEntryValue | null, max: number) => String(v ?? '').trim(
 /** Texte sur une ligne (sujet, nom, coordonnées) : pas de retour à la ligne ni de caractère de contrôle. */
 const line = (v: FormDataEntryValue | null, max: number) => str(v, max).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
 
-async function sha256(text: string) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+/**
+ * Empreinte d'une adresse IP : HMAC-SHA256 avec le secret IP_HASH_SALT.
+ * Sans ce secret, impossible de retrouver une IP en testant toutes les adresses possibles.
+ * (Si le secret n'est pas défini, repli sur un simple SHA-256 préfixé, plus faible.)
+ */
+async function ipHash(scope: string, ip: string) {
+  const salt = Deno.env.get('IP_HASH_SALT');
+  const enc = new TextEncoder();
+  const data = enc.encode(`${scope}:${ip}`);
+  const buf = salt
+    ? await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', enc.encode(salt), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), data)
+    : await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -133,7 +144,7 @@ async function handle(req: Request): Promise<Response> {
   if (!(await verifyTurnstile(str(form.get('cf-turnstile-response'), 2048), ip))) {
     return json({ error: 'captcha', message: 'Vérification anti-robot échouée, réessayez.' }, 403, origin);
   }
-  const ipHash = await sha256(`taximeter:${ip}`);
+  const ipHash = await ipHash('taximeter', ip);
   try {
     const recent = Number(await db('rpc/contact_recent_count', { method: 'POST', body: JSON.stringify({ p_ip_hash: ipHash }) }));
     if (recent >= MAX_PER_HOUR) return json({ error: 'rate_limited', message: 'Trop de messages envoyés, réessayez dans une heure.' }, 429, origin);

@@ -76,3 +76,7 @@ Pour débloquer un appareil : Table Editor → `route_blocks` → supprimer la l
 Effets :
 - dès que l'e-mail est parti, le contenu du message est effacé de `contact_messages` (il reste date + empreinte d'IP, supprimées après 1 jour) ; en cas d'échec d'envoi, le message est gardé 30 jours au maximum ;
 - table `visits` : une ligne par page affichée (identifiant aléatoire du navigateur, renouvelé tous les 13 mois, données purgées après 25 mois). Statistiques via `visits_per_period` et `visitor_frequency`. Refus possible depuis la page Confidentialité.
+
+## Empreintes d'IP avec clé secrète
+
+Secret `IP_HASH_SALT` (Edge Functions → Secrets) : une longue valeur aléatoire, par exemple générée avec `openssl rand -hex 32`. Redéployer ensuite `route` et `contact`. Sans ce secret, les fonctions marchent toujours mais avec une empreinte plus faible. Ne jamais le mettre dans le code ni le changer souvent (changer la valeur remet à zéro les limites en cours, sans autre effet).

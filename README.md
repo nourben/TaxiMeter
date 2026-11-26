@@ -45,3 +45,7 @@ Exemples vérifiés par les tests (20 km à 1,20 €) : hospitalisation 37,00 �
 ## Calcul de distance
 
 Le bouton « Calculer la distance » appelle la fonction Supabase `route` (Google Routes), qui retient toujours l'itinéraire le plus court en km : l'Assurance maladie rembourse sur la base du trajet le moins onéreux. Voir [docs/SUPABASE.md](docs/SUPABASE.md).
+
+## Pages légales
+
+Quand le texte des CGU ou de la politique de confidentialité change (nouvelle donnée collectée, nouveau sous-traitant, nouvelle durée…), mettre à jour leur date « Dernière mise à jour ». Une modification du site qui ne change pas ce qui y est décrit ne demande pas de nouvelle date.

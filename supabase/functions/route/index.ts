@@ -11,6 +11,7 @@
 // Secrets (Supabase → Edge Functions → Secrets) :
 //   GOOGLE_MAPS_API_KEY   (obligatoire)
 //   GOOGLE_MONTHLY_LIMIT  (facultatif, 4600 par défaut : sous les 5 000 appels gratuits du niveau Pro)
+//   IP_HASH_SALT          (recommandé) secret aléatoire pour les empreintes d'IP, même valeur que pour « contact »
 // Le compteur (table api_usage, mois en heure de Paris) bloque les calculs au-delà de la limite,
 // puisque les quotas de la console Google ne sont pas modifiables pendant l'essai gratuit.
 // SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis automatiquement par Supabase.
@@ -69,8 +70,18 @@ async function serviceRpc(name: string, body: unknown) {
   return res.status === 204 || res.status === 201 ? null : res.json();
 }
 
-async function sha256(text: string) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+/**
+ * Empreinte d'une adresse IP : HMAC-SHA256 avec le secret IP_HASH_SALT.
+ * Sans ce secret, impossible de retrouver une IP en testant toutes les adresses possibles.
+ * (Si le secret n'est pas défini, repli sur un simple SHA-256 préfixé, plus faible.)
+ */
+async function ipHash(scope: string, ip: string) {
+  const salt = Deno.env.get('IP_HASH_SALT');
+  const enc = new TextEncoder();
+  const data = enc.encode(`${scope}:${ip}`);
+  const buf = salt
+    ? await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', enc.encode(salt), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), data)
+    : await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -121,7 +132,7 @@ async function handle(req: Request): Promise<Response> {
   // Limite par appareil (IP hachée) : 10 / min, 60 / h, 200 / 24 h, blocage de 24 h après 3 dépassements
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'inconnue';
   try {
-    const check = await serviceRpc('rpc/route_rate_check', { p_ip_hash: await sha256(`taximeter-route:${ip}`) });
+    const check = await serviceRpc('rpc/route_rate_check', { p_ip_hash: await ipHash('taximeter-route', ip) });
     if (!check?.allowed) {
       const wait = WAIT[check?.reason] ?? 'quelques minutes';
       const message =
