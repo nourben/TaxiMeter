@@ -1,5 +1,5 @@
 import { GRANULARITIES } from '../core/periods.js';
-import { estimatesPerPeriod } from '../services/stats.js';
+import { estimatesPerPeriod, visitsPerPeriod, visitorFrequency } from '../services/stats.js';
 
 const fmt = (n) => n.toLocaleString('fr-FR');
 const UNIT = { day: 'jour', week: 'semaine', month: 'mois', year: 'an' };
@@ -21,7 +21,8 @@ function setupModule(root) {
   const kind = root.dataset.kind;
   const r = (name) => root.querySelector(`[data-r="${name}"]`);
   const storageKey = `taximeter.stats.${kind}.granularity`;
-  const words = kind === 'distance' ? ['calcul', 'calculs'] : ['estimation', 'estimations'];
+  const visitors = kind === 'visitors';
+  const words = kind === 'distance' ? ['calcul', 'calculs'] : visitors ? ['visiteur', 'visiteurs'] : ['estimation', 'estimations'];
   const fixedCaption = kind === 'distance' ? r('caption').textContent : '';
 
   let granularity = 'day';
@@ -44,7 +45,7 @@ function setupModule(root) {
     r('caption').textContent = fixedCaption ? `${fixedCaption} · ${g.caption}` : g.caption;
     let data;
     try {
-      data = await estimatesPerPeriod(granularity, kind);
+      data = visitors ? await visitsPerPeriod(granularity) : await estimatesPerPeriod(granularity, kind);
       r('error').classList.add('hidden');
     } catch {
       r('error').classList.remove('hidden');
@@ -57,7 +58,13 @@ function setupModule(root) {
     const current = data[data.length - 1];
     const best = data.reduce((a, b) => (b.count > a.count ? b : a));
     r('empty').classList.toggle('hidden', total > 0);
-    r('stats').innerHTML = `
+    const nowLabel = granularity === 'day' ? 'aujourd’hui' : 'période en cours';
+    r('stats').innerHTML = visitors
+      ? `
+      <div><span class="stat-value">${fmt(current.count)}</span><span class="stat-label">visiteurs ${nowLabel}</span></div>
+      <div><span class="stat-value">${fmt(current.returning)}</span><span class="stat-label">dont déjà venus</span></div>
+      <div><span class="stat-value">${fmt(Math.round(total / data.length))}</span><span class="stat-label">en moyenne par ${UNIT[granularity]}</span></div>`
+      : `
       <div><span class="stat-value">${fmt(total)}</span><span class="stat-label">au total</span></div>
       <div><span class="stat-value">${fmt(Math.round(total / data.length))}</span><span class="stat-label">en moyenne par ${UNIT[granularity]}</span></div>
       <div><span class="stat-value">${fmt(current.count)}</span><span class="stat-label">${granularity === 'day' ? 'aujourd’hui' : 'période en cours'}</span></div>`;
@@ -83,14 +90,21 @@ function setupModule(root) {
     chart.innerHTML = `<div class="chart-plot">${grid}<div class="chart-cols">${bars}</div></div>`;
 
     r('rows').innerHTML = data
-      .map((d) => `<tr><td>${d.long}${d.current ? ' (en cours)' : ''}</td><td class="num">${fmt(d.count)}</td></tr>`)
+      .map(
+        (d) =>
+          `<tr><td>${d.long}${d.current ? ' (en cours)' : ''}</td><td class="num">${fmt(d.count)}</td>${
+            visitors ? `<td class="num">${fmt(d.returning)}</td><td class="num">${fmt(d.views)}</td>` : ''
+          }</tr>`,
+      )
       .join('');
 
     // Infobulle au survol ou au toucher
     const tip = r('tip');
     const show = (col) => {
       const d = data[Number(col.dataset.i)];
-      tip.textContent = `${d.long} : ${fmt(d.count)} ${d.count > 1 ? words[1] : words[0]}`;
+      tip.textContent =
+        `${d.long} : ${fmt(d.count)} ${d.count > 1 ? words[1] : words[0]}` +
+        (visitors ? ` (dont ${fmt(d.returning)} déjà venus) · ${fmt(d.views)} pages vues` : '');
       tip.classList.remove('hidden');
       chart.querySelectorAll('.chart-col').forEach((c) => c.classList.toggle('is-active', c === col));
     };
@@ -131,3 +145,24 @@ function setupModule(root) {
 }
 
 document.querySelectorAll('.stats-module').forEach(setupModule);
+
+// Fidélité des visiteurs sur 30 jours
+const BRACKETS = { 1: '1 jour', '2-3': '2 à 3 jours', '4-9': '4 à 9 jours', '10+': '10 jours ou plus' };
+const freq = document.getElementById('visitor-frequency');
+if (freq) {
+  visitorFrequency()
+    .then((rows) => {
+      const total = rows.reduce((s, x) => s + x.visitors, 0);
+      freq.innerHTML = rows
+        .map(
+          (x) =>
+            `<tr><td>Venus ${BRACKETS[x.bracket] ?? x.bracket}</td><td class="num">${fmt(x.visitors)}</td><td class="num">${
+              total ? Math.round((x.visitors / total) * 100) : 0
+            } %</td></tr>`,
+        )
+        .join('');
+    })
+    .catch(() => {
+      freq.innerHTML = '<tr><td colspan="3">Indisponible pour le moment.</td></tr>';
+    });
+}

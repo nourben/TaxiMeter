@@ -157,7 +157,7 @@ async function handle(req: Request): Promise<Response> {
   // 5. E-mail de notification (Resend)
   const to = Deno.env.get('CONTACT_TO_EMAIL');
   const key = Deno.env.get('RESEND_API_KEY');
-  if (!to || !key) return json({ ok: true, emailed: false }, 200, origin); // message gardé dans Supabase
+  if (!to || !key) return json({ ok: true, emailed: false }, 200, origin); // message gardé dans Supabase (30 jours max)
   const text = [
     `Nouveau message depuis le formulaire de contact TaxiMeter (n° ${id})`,
     '',
@@ -184,9 +184,13 @@ async function handle(req: Request): Promise<Response> {
   }).catch(() => null);
 
   if (res?.ok) {
-    await db(`contact_messages?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ email_sent: true }) }).catch(() => {});
+    // E-mail parti : on efface le contenu du message. Il ne reste que la date et l'empreinte d'IP (anti-spam).
+    await db(`contact_messages?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ email_sent: true, name: null, email: null, phone: null, subject: null, message: null, attachment_name: null }),
+    }).catch(() => {});
   }
-  // Le message est enregistré même si l'e-mail échoue : on répond « ok » à l'utilisateur
+  // Si l'e-mail échoue, le message reste dans Supabase (30 jours au maximum) : on répond « ok » à l'utilisateur
   return json({ ok: true, emailed: !!res?.ok }, 200, origin);
 }
 

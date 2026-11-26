@@ -67,3 +67,12 @@ En-têtes : `apikey: <clé publique>` (+ `Authorization: Bearer <clé publique>`
 2. Redéployer la fonction `route` avec le nouveau `supabase/functions/route/index.ts` (Verify JWT reste désactivé).
 
 Pour débloquer un appareil : Table Editor → `route_blocks` → supprimer la ligne (les IP sont hachées, on ne peut pas savoir à qui elles appartiennent).
+
+## Purge du formulaire de contact + mesure d'audience (0006)
+
+1. SQL Editor → coller `supabase/migrations/0006_contact_purge_visits.sql` → Run (**avant** de redéployer la fonction).
+2. Redéployer la fonction `contact` (code de `supabase/functions/contact/index.ts`).
+
+Effets :
+- dès que l'e-mail est parti, le contenu du message est effacé de `contact_messages` (il reste date + empreinte d'IP, supprimées après 1 jour) ; en cas d'échec d'envoi, le message est gardé 30 jours au maximum ;
+- table `visits` : une ligne par page affichée (identifiant aléatoire du navigateur, renouvelé tous les 13 mois, données purgées après 25 mois). Statistiques via `visits_per_period` et `visitor_frequency`. Refus possible depuis la page Confidentialité.

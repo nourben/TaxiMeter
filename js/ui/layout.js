@@ -9,8 +9,9 @@ const ICON_SUN =
 
 const FOOTER_LINKS = [
   { href: 'stats.html', label: 'Statistiques' },
-  { href: 'cgv.html', label: 'CGV' },
+  { href: 'cgu.html', label: 'CGU' },
   { href: 'mentions-legales.html', label: 'Mentions légales' },
+  { href: 'confidentialite.html', label: 'Confidentialité' },
   { href: 'contact.html', label: 'Contact' },
 ];
 
@@ -69,3 +70,6 @@ function renderFooter() {
 
 renderHeader();
 renderFooter();
+
+// Mesure d'audience anonyme (chargée à part : une erreur ne doit pas casser la page)
+import('../services/visits.js').then((m) => m.trackPageView()).catch(() => {});
