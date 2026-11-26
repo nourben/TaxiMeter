@@ -84,4 +84,6 @@ Secret `IP_HASH_SALT` (Edge Functions → Secrets) : une longue valeur aléatoir
 ## Durée du cache des itinéraires (0007)
 
 1. SQL Editor → coller `supabase/migrations/0007_route_cache_duration.sql` → Run (la base garde désormais les itinéraires jusqu'à 30 jours).
-2. Secret facultatif `ROUTE_CACHE_HOURS` : durée en heures pendant laquelle un même départ / destination est resservi sans appeler Google (24 par défaut, 0 = pas de cache, 720 maximum). Redéployer `route` après avoir ajouté ou modifié le secret.
+2. Secret facultatif `ROUTE_CACHE_HOURS` : durée en heures pendant laquelle un même départ / destination est resservi sans appeler Google (24 par défaut, 0 = pas de cache, 720 maximum). La fonction supprime elle-même les itinéraires plus vieux que cette durée ; la purge SQL à 30 jours n'est qu'un filet de sécurité. Redéployer `route` après avoir ajouté ou modifié le secret.
+
+> Conditions Google Maps Platform (EEA, section Routes API) : seules les latitudes / longitudes peuvent être mises en cache (30 jours max). Garder une distance ou une durée en cache n'est pas explicitement autorisé : `ROUTE_CACHE_HOURS=0` pour s'y conformer strictement.

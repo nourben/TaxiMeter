@@ -19,6 +19,9 @@ function preferredRate() {
   }
   return TARIFS.defaultRatePerKm;
 }
+/** Tarif de référence de la page : le tarif mémorisé à l'ouverture, sinon le tarif par défaut. */
+const BASE_RATE = preferredRate();
+
 function savePreferredRate(r) {
   try {
     localStorage.setItem(RATE_KEY, String(r));
@@ -156,7 +159,7 @@ function tripTemplate(t) {
   const rates = TARIFS.ratesPerKm
     .map((r) => {
       const id = `rate-${t.id}-${String(r).replace('.', '')}`;
-      const nd = r === TARIFS.defaultRatePerKm ? '' : ' class="nondefault"';
+      const nd = r === BASE_RATE ? '' : ' class="nondefault"';
       return `<input type="radio" name="rate-${t.id}" id="${id}" value="${r}" data-f="rate"${nd} /><label for="${id}">${num(r.toFixed(2))} €</label>`;
     })
     .join('');
@@ -357,10 +360,10 @@ function updateTrip(t, index, count) {
   soloRow.querySelector('.solo-chip').classList.toggle('is-on', t.soloLong && longEnough);
 
   const rateHint = o('hint-rate');
-  const nonDefault = t.rate !== TARIFS.defaultRatePerKm;
+  const nonDefault = t.rate !== BASE_RATE;
   rateHint.classList.toggle('hidden', !nonDefault);
   rateHint.innerHTML = nonDefault
-    ? `<span class="warn-text">Tarif ${num(t.rate.toFixed(2))} €/km au lieu de ${num(TARIFS.defaultRatePerKm.toFixed(2))} €</span>`
+    ? `<span class="warn-text">Tarif ${num(t.rate.toFixed(2))} €/km au lieu de ${num(BASE_RATE.toFixed(2))} €</span>`
     : '';
 }
 
@@ -387,7 +390,7 @@ function summaryLabel(params) {
   if (params.night) bits.push('Nuit/WE/férié');
   if (params.hospital) bits.push('Hospitalisation');
   if (params.metropole) bits.push('Métropole');
-  if (params.ratePerKm !== TARIFS.defaultRatePerKm) bits.push(`${num(params.ratePerKm.toFixed(2))} €/km`);
+  if (params.ratePerKm !== BASE_RATE) bits.push(`${num(params.ratePerKm.toFixed(2))} €/km`);
   if (params.discount) bits.push(`− ${pct(params.discount)}`);
   return bits.join(' · ');
 }

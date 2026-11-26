@@ -59,6 +59,14 @@ export function selectRoute(routes: Route[]) {
   return routes.reduce((a, b) => (b.distanceKm < a.distanceKm || (b.distanceKm === a.distanceKm && b.durationMin < a.durationMin) ? b : a));
 }
 
+async function fetchDelete(path: string) {
+  const url = Deno.env.get('SUPABASE_URL');
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !key) throw new Error('Supabase non configuré');
+  const res = await fetch(`${url}/rest/v1/${path}`, { method: 'DELETE', headers: { apikey: key, Authorization: `Bearer ${key}` } });
+  if (!res.ok) throw new Error(`Base ${res.status}`);
+}
+
 async function serviceRpc(name: string, body: unknown) {
   const url = Deno.env.get('SUPABASE_URL');
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -157,6 +165,8 @@ async function handle(req: Request): Promise<Response> {
   if (cacheHours > 0) {
     try {
     const since = new Date(Date.now() - cacheHours * 3600 * 1000).toISOString();
+    // Purge : les itinéraires plus vieux que la durée du cache sont supprimés (ne servent plus)
+    await fetchDelete(`route_cache?created_at=lt.${since}`).catch(() => {});
     const hit = await serviceRpc(`route_cache?key=eq.${encodeURIComponent(cacheKey)}&created_at=gte.${since}&select=distance_km,duration_min`, undefined);
     if (Array.isArray(hit) && hit.length) {
       return json({ distanceKm: Number(hit[0].distance_km), durationMin: Number(hit[0].duration_min), cached: true }, 200, origin);
