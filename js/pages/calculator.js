@@ -4,6 +4,7 @@ import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
+import { getZone } from '../services/zone.js';
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
@@ -301,6 +302,8 @@ function mountTrip(t) {
   }
   for (const key of ['origin', 'destination']) {
     const input = node.querySelector(`[data-f="${key}"]`);
+    // Zone du chauffeur demandée dès l'entrée dans le champ, pour être prête aux premières suggestions
+    input.addEventListener('focus', () => getZone(), { once: true });
     attachAutocomplete(input, {
       fetch: suggest,
       onSelect: (place) => {
