@@ -15,7 +15,7 @@ export const INFO_CONTENT = {
     <p class="warn-text">Les km facturés au-delà du plus court peuvent être refusés au contrôle : à réserver aux cas justifiables (bouchons, travaux, déviation).</p>`,
   trajet: `
     <p>Une course peut compter jusqu’à 20 trajets : chacun a sa distance, ses options et son prix ; le module « Prix estimé » fait le total.</p>
-    <p>Le bouton Google Maps ouvre l’itinéraire : relevez les km et saisissez-les. Plus tard, l’API remplira la distance et le temps de trajet ; la distance restera modifiable (↺ pour revenir à la valeur calculée).</p>
+    <p>Le bouton <strong>Calculer la distance</strong> remplit les km et le temps de trajet ; vous pouvez corriger les km (↺ pour revenir à la valeur calculée). Sinon, <strong>Google Maps</strong> ouvre l’itinéraire pour les relever.</p>
     <p>Les <strong>${t.includedKm} premiers km</strong> sont compris dans la prise en charge de ${n(t.pickup)} € : règle de la convention Sécu des taxis conventionnés (convention-cadre 2025).</p>`,
   nuit: `
     <p><strong>+ ${n(t.majorations.night.rate * 100)} %</strong> sur l’ensemble du montant : prise en charge, forfait grande ville et kilomètres, majoration hospitalisation comprise.</p>
