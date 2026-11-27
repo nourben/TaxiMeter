@@ -90,6 +90,11 @@ const state = { trips: [newTrip()], openFares: new Set(), optimized: false };
 
 /* ---------- Calculs dérivés ---------- */
 
+/** Distance écrite à la française dans le champ : 37,4 */
+function kmText(km) {
+  return String(km).replace('.', ',');
+}
+
 function readKm(value) {
   const raw = String(value).trim().replace(',', '.');
   if (raw === '') return null;
@@ -224,7 +229,7 @@ function tripTemplate(t) {
       <div class="route-choices hidden" data-o="choices" role="radiogroup" aria-label="Itinéraire facturé"></div>
       <div class="opt-row opt-km">
       <div class="km-field opt-wide">
-        <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
+        <input type="text" data-f="distance" inputmode="decimal" placeholder="Distance" aria-label="Distance en km" />
         <button type="button" class="km-reset hidden" data-a="reset-km" aria-label="Revenir à la distance calculée" title="Revenir à la distance calculée">↺</button>
         <span class="suffix">km</span>
       </div>
@@ -478,7 +483,7 @@ function applyChoice(t, key) {
   t.routeChoice = key === 'faster' && opts ? 'faster' : 'shortest';
   t.apiDistance = r.distanceKm;
   t.apiDuration = r.durationMin;
-  t.distance = String(r.distanceKm);
+  t.distance = kmText(r.distanceKm);
   t.copiedFromFirst = false;
   tripNode(t).querySelector('[data-f="distance"]').value = t.distance;
 }
@@ -676,6 +681,12 @@ function bind() {
     const t = tripFromEvent(e);
     const f = e.target.dataset.f;
     if (!t || !['origin', 'destination', 'distance'].includes(f)) return;
+    if (f === 'distance' && e.target.value.includes('.')) {
+      // Virgule française dans tous les cas, même si le clavier tape un point
+      const pos = e.target.selectionStart;
+      e.target.value = e.target.value.replace(/\./g, ',');
+      e.target.setSelectionRange(pos, pos);
+    }
     t[f] = e.target.value;
     if (f === 'distance') t.copiedFromFirst = false;
     if (f !== 'distance') {
@@ -727,7 +738,7 @@ function bind() {
         removeTrip(t);
         return;
       case 'reset-km':
-        t.distance = String(t.apiDistance);
+        t.distance = kmText(t.apiDistance);
         node.querySelector('[data-f="distance"]').value = t.distance;
         break;
       case 'clear-km':
@@ -872,7 +883,7 @@ function setRouteResult(index, { distanceKm, durationMin }) {
   if (!t) return;
   t.apiDistance = distanceKm;
   t.apiDuration = durationMin ?? null;
-  t.distance = String(distanceKm);
+  t.distance = kmText(distanceKm);
   tripNode(t).querySelector('[data-f="distance"]').value = t.distance;
   update();
 }
