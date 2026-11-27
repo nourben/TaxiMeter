@@ -5,7 +5,7 @@ import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
 import { suggestCenter } from '../core/nearby.js';
-import { getZone, getZoneDebug } from '../services/zone.js';
+import { getZone } from '../services/zone.js';
 
 const DEPT_KEY = 'taximeter.dept';
 /** Département choisi dans la recherche de tarif, mémorisé pour centrer les suggestions d'adresses. */
@@ -22,18 +22,6 @@ function saveDept(code) {
   } catch {
     /* navigation privée : non mémorisé */
   }
-}
-
-// DEBUG TEMPORAIRE : affiche le centre des suggestions sous le prix
-function showCenterDebug(key, center) {
-  const out = document.getElementById('zone-debug');
-  if (!out) return;
-  const ipInfo = getZoneDebug();
-  const where = !center ? 'aucun centre'
-    : center.source === 'IP' ? `autour de l’IP (${ipInfo?.city ?? '?'}, ${ipInfo?.postal ?? '?'})`
-    : `autour du ${center.source}`;
-  const err = !center && ipInfo?.error ? ` – IP : ${ipInfo.error}` : '';
-  out.textContent = `Suggestions ${key === 'origin' ? 'départ' : 'destination'} : ${where}${err}`;
 }
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
@@ -341,9 +329,7 @@ function mountTrip(t) {
         const origin = key === 'destination' && g && g.query === t.origin.trim() ? g : null;
         const dept = savedDept();
         const ip = origin || dept ? null : await getZone();
-        const center = suggestCenter({ origin, dept, ip });
-        showCenterDebug(key, center);
-        return suggest(q, signal, center);
+        return suggest(q, signal, suggestCenter({ origin, dept, ip }));
       },
       onSelect: (place) => {
         input.value = place.label;

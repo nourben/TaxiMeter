@@ -13,16 +13,6 @@ const TIMEOUT_MS = 2500;
 
 let pending = null;
 
-// DEBUG TEMPORAIRE : infos brutes de la dernière estimation (ville, département…) pour vérifier la zone
-const DEBUG_KEY = 'taximeter.zone.debug';
-function setDebug(info) {
-  try { sessionStorage.setItem(DEBUG_KEY, JSON.stringify(info)); } catch { /* ignore */ }
-  window.dispatchEvent(new CustomEvent('taximeter:zone-debug', { detail: info }));
-}
-export function getZoneDebug() {
-  try { return JSON.parse(sessionStorage.getItem(DEBUG_KEY)); } catch { return null; }
-}
-
 function readCache() {
   try {
     const raw = sessionStorage.getItem(KEY);
@@ -45,14 +35,12 @@ async function fetchZone() {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(ENDPOINT, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
-    if (!res.ok) { setDebug({ error: `HTTP ${res.status}` }); return undefined; }
+    if (!res.ok) return undefined;
     const d = await res.json();
-    setDebug({ city: d.cityName, postal: d.zipCode, region: d.regionName, country: d.countryCode, lat: d.latitude, lon: d.longitude });
     const zone = validZone({ lat: d.latitude, lon: d.longitude, country: d.countryCode });
     // Arrondi à ~1 km : seule une zone approximative est utile
     return zone && { lat: Math.round(zone.lat * 100) / 100, lon: Math.round(zone.lon * 100) / 100, country: zone.country };
-  } catch (e) {
-    setDebug({ error: e?.name === 'AbortError' ? 'délai dépassé' : 'requête bloquée' });
+  } catch {
     return undefined;
   } finally {
     clearTimeout(timer);
