@@ -21,8 +21,9 @@ test('8 km de plus exactement : accepté ; au-delà : refusé', () => {
 
 test('gain trop faible : pas d’alternative', () => {
   assert.equal(fasterAlternative([r(8, 20), r(12, 17)]), null); // −3 min
-  assert.equal(fasterAlternative([r(40, 60), r(45, 54)]), null); // −6 min mais 10 % seulement
-  assert.deepEqual(fasterAlternative([r(40, 60), r(45, 51)]), r(45, 51)); // −9 min, 15 %
+  assert.equal(fasterAlternative([r(60, 80), r(65, 73)]), null); // −7 min mais 8,75 % seulement
+  assert.deepEqual(fasterAlternative([r(60, 80), r(65, 72)]), r(65, 72)); // −8 min, 10 %
+  assert.deepEqual(fasterAlternative([r(40, 60), r(45, 54)]), r(45, 54)); // −6 min, 10 %
 });
 
 test('plusieurs alternatives : la plus rapide', () => {

@@ -48,7 +48,7 @@ Le bouton « Calculer la distance » appelle la fonction Supabase `route` (Googl
 
 Une heure de départ future (champ « Départ ») est transmise à Google pour une durée avec le trafic prévu ; sans heure, le calcul est fait pour un départ immédiat.
 
-Mode « Itinéraire optimisé » (bascule à côté du titre, désactivée à chaque ouverture) : si Google renvoie un itinéraire plus rapide qui ajoute 8 km au plus et fait gagner au moins 5 min et 15 % du temps, les deux sont proposés et l'utilisateur choisit (règle dans `js/core/route-choice.js`, testée).
+Mode « Itinéraire optimisé » (bascule à côté du titre, désactivée à chaque ouverture) : si Google renvoie un itinéraire plus rapide qui ajoute 8 km au plus et fait gagner au moins 5 min et 10 % du temps, les deux sont proposés et l'utilisateur choisit (règle dans `js/core/route-choice.js`, testée).
 
 ## Mise à jour automatique
 

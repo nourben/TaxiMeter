@@ -4,12 +4,12 @@
 // le moins onéreux). En mode optimisé, on propose EN PLUS un itinéraire plus rapide, que
 // l'utilisateur peut choisir, s'il :
 //   - ajoute au plus 8 km (8 inclus),
-//   - fait gagner au moins 5 minutes ET au moins 15 % du temps du plus court.
+//   - fait gagner au moins 5 minutes ET au moins 10 % du temps du plus court.
 // Ces deux seuils de gain remplacent le ratio « 1 km ≈ 1 min » : ils comparent les itinéraires
 // entre eux, donc fonctionnent aussi bien en ville que sur voie rapide, et écartent les
 // alternatives qui ne font gagner qu'une ou deux minutes.
 
-export const OPTIMIZED_RULES = { maxExtraKm: 8, minGainMin: 5, minGainRatio: 0.15 };
+export const OPTIMIZED_RULES = { maxExtraKm: 8, minGainMin: 5, minGainRatio: 0.1 };
 
 const valid = (r) => r && Number.isFinite(r.distanceKm) && Number.isFinite(r.durationMin);
 
