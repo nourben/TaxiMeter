@@ -196,7 +196,7 @@ export async function drawShareImage(d) {
   }
   ctx.fillStyle = C.text;
   ctx.font = font(31, 700);
-  ctx.fillText('Scannez pour ouvrir ce calcul', PAD + size + 30, fy + 62);
+  ctx.fillText(fit(ctx, 'Scannez pour ouvrir cette estimation', innerW - size - 30), PAD + size + 30, fy + 62);
   ctx.fillStyle = C.muted;
   ctx.font = font(27, 400);
   ctx.fillText(fit(ctx, d.linkLabel, innerW - size - 30), PAD + size + 30, fy + 104);
