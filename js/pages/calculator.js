@@ -74,6 +74,7 @@ function newTrip() {
     hospital: false,
     metropole: null,
     rate: preferredRate(),
+    otherRate: null, // dernier tarif choisi hors boutons rapides (liste « Autres » ou recherche par département)
     excluded: false,
     soloLong: false,
     copiedFromFirst: false,
@@ -444,9 +445,11 @@ function updateTrip(t, index, count) {
 
   // Tarif hors boutons rapides : affiché dans « Autres »
   const quick = TARIFS.ratesPerKm.includes(t.rate);
+  if (!quick) t.otherRate = t.rate;
+  const other = quick ? t.otherRate : t.rate; // tarif gardé dans « Autres » même quand un bouton rapide est choisi
   const otherSel = node.querySelector('[data-f="rate-other"]');
-  otherSel.value = quick ? '' : String(t.rate);
-  o('rate-other-label').textContent = quick ? 'Autres ▾' : `${num(t.rate.toFixed(2))} € ▾`;
+  otherSel.value = other != null ? String(other) : '';
+  o('rate-other-label').textContent = other != null ? `${num(other.toFixed(2))} € ▾` : 'Autres ▾';
   o('rate-other-wrap').classList.toggle('is-on', !quick);
   o('rate-other-wrap').classList.toggle('nondefault', !quick && t.rate !== BASE_RATE);
   const dept = node.querySelector('[data-f="dept"]');
@@ -732,6 +735,17 @@ function bind() {
       t.routeMsg = null;
       t.routes = null;
     }
+    update();
+  });
+
+  // Liste « Autres » refermée sans changement (tarif gardé re-sélectionné) : on l'applique quand même
+  el.trips.addEventListener('focusout', (e) => {
+    if (e.target.dataset?.f !== 'rate-other' || !e.target.value) return;
+    const t = tripFromEvent(e);
+    const v = Number(e.target.value);
+    if (!t || v === t.rate) return;
+    t.rate = v;
+    savePreferredRate(t.rate);
     update();
   });
 
