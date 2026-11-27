@@ -8,10 +8,20 @@
 import { validZone } from '../core/nearby.js';
 
 const ENDPOINT = 'https://ipapi.co/json/';
-const KEY = 'taximeter.zone.v1';
+const KEY = 'taximeter.zone.v2';
 const TIMEOUT_MS = 2500;
 
 let pending = null;
+
+// DEBUG TEMPORAIRE : infos brutes de la dernière estimation (ville, département…) pour vérifier la zone
+const DEBUG_KEY = 'taximeter.zone.debug';
+function setDebug(info) {
+  try { sessionStorage.setItem(DEBUG_KEY, JSON.stringify(info)); } catch { /* ignore */ }
+  window.dispatchEvent(new CustomEvent('taximeter:zone-debug', { detail: info }));
+}
+export function getZoneDebug() {
+  try { return JSON.parse(sessionStorage.getItem(DEBUG_KEY)); } catch { return null; }
+}
 
 function readCache() {
   try {
@@ -35,13 +45,15 @@ async function fetchZone() {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(ENDPOINT, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
-    if (!res.ok) return null;
+    if (!res.ok) { setDebug({ error: `HTTP ${res.status}` }); return null; }
     const d = await res.json();
-    if (d?.error) return null;
+    if (d?.error) { setDebug({ error: d.reason || 'erreur ipapi' }); return null; }
+    setDebug({ city: d.city, postal: d.postal, region: d.region, country: d.country_code, lat: d.latitude, lon: d.longitude });
     const zone = validZone({ lat: d.latitude, lon: d.longitude, country: d.country_code });
     // Arrondi à ~1 km : seule une zone approximative est utile
     return zone && { lat: Math.round(zone.lat * 100) / 100, lon: Math.round(zone.lon * 100) / 100, country: zone.country };
-  } catch {
+  } catch (e) {
+    setDebug({ error: e?.name === 'AbortError' ? 'délai dépassé' : 'requête bloquée' });
     return null;
   } finally {
     clearTimeout(timer);

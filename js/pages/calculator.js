@@ -4,7 +4,18 @@ import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
-import { getZone } from '../services/zone.js';
+import { getZone, getZoneDebug } from '../services/zone.js';
+
+// DEBUG TEMPORAIRE : affiche la zone détectée sous le prix
+function showZoneDebug(info) {
+  const el = document.getElementById('zone-debug');
+  if (!el || !info) return;
+  el.textContent = info.error
+    ? `Zone : non trouvée (${info.error})`
+    : `Zone : ${info.city ?? '?'} (${info.postal ?? '?'}) – ${info.region ?? '?'}, ${info.country ?? '?'}`;
+}
+window.addEventListener('taximeter:zone-debug', (e) => showZoneDebug(e.detail));
+showZoneDebug(getZoneDebug());
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
