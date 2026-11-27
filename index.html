@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>TaxiMeter — Estimer le prix d’une course</title>
-    <meta name="description" content="Estimez le prix d’une course de taxi : distance, tarif jour/nuit, supplément Métropole." />
+    <title>TaxiMeter — Simulateur du prix d’un taxi conventionné (CPAM)</title>
+    <meta name="description" content="Simulateur gratuit du prix d’une course de taxi conventionné (Assurance Maladie, convention 2025) : distance, majorations nuit et hospitalisation, forfait grande ville, transport partagé." />
     <meta name="theme-color" content="#f5b400" />
     <script>
       try { if (localStorage.getItem('taximeter.theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
@@ -26,6 +26,7 @@
           <button class="info-btn" data-info="optimise" aria-label="Aide sur l’itinéraire optimisé">i</button>
         </div>
       </div>
+      <p class="page-lead">Simulateur du tarif des taxis conventionnés (Assurance Maladie), convention 2025</p>
 
       <form id="fare-form" novalidate autocomplete="off" onsubmit="return false">
         <section class="card" aria-labelledby="h-trips">
