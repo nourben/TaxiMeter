@@ -11,6 +11,8 @@ import { attachDeptPicker } from '../ui/dept-picker.js';
 import { attachWhenPicker, formatDeparture, futureOrNull } from '../ui/when-picker.js';
 import { shortestRoute, fasterAlternative } from '../core/route-choice.js';
 import { nightRateFor } from '../core/period.js';
+import { encodeShare, decodeShare, shortPlace } from '../core/share-link.js';
+import { attachShare } from '../ui/share.js';
 
 const RATE_KEY = 'taximeter.rate';
 /** Dernier tarif au km choisi, mémorisé dans le navigateur. */
@@ -574,6 +576,8 @@ function logEstimate(valid, total) {
   });
 }
 
+let share = null; // bouton « Partager » (créé au démarrage)
+
 function renderPrice() {
   const results = state.trips.map((t) => ({ t, r: fareOf(t) }));
   const valid = results.filter((x) => x.r && !x.t.excluded);
@@ -592,6 +596,7 @@ function renderPrice() {
   el.priceNote.textContent = notes.length ? `Non compté${missing + excludedCount > 1 ? 's' : ''} : ${notes.join(', ')}.` : '';
 
   logEstimate(valid, total);
+  share?.refresh(valid.length > 0);
 
   const ctx = sharedContext();
   el.sharedRow.classList.toggle('hidden', ctx.patients < 2);
@@ -950,11 +955,125 @@ function setRouteResult(index, { distanceKm, durationMin }) {
   update();
 }
 
+/* ---------- Partage ---------- */
+
+function amountText(l) {
+  if (l.key === 'discount') return `− ${formatEuro(-l.amount)}`;
+  return `${l.key === 'pickup' || l.key === 'distance' ? '' : '+ '}${formatEuro(l.amount)}`;
+}
+
+/** Données de partage : image, texte et lien (null s'il n'y a pas de prix). */
+function shareSnapshot() {
+  const valid = state.trips.map((t) => ({ t, r: fareOf(t) })).filter((x) => x.r && !x.t.excluded);
+  if (!valid.length) return null;
+  const total = round2(valid.reduce((s, x) => s + x.r.fare.total, 0));
+  const ctx = sharedContext();
+
+  const trips = valid.map(({ t, r }) => {
+    const p = r.params;
+    const departAt = futureOrNull(t.departAt);
+    const duration = t.apiDuration != null && readKm(t.distance) === t.apiDistance ? t.apiDuration : null;
+    return {
+      from: shortPlace(t.origin, placeFor(t, 'origin')),
+      to: shortPlace(t.destination, placeFor(t, 'destination')),
+      km: p.distanceKm,
+      rate: p.ratePerKm,
+      durationMin: duration,
+      departAt,
+      hospital: p.hospital,
+      night: p.night,
+      metropole: p.metropole,
+      soloLong: t.soloLong,
+      fare: r.fare,
+    };
+  });
+
+  const link = `${location.origin}${location.pathname}?c=${encodeShare(trips)}`;
+  const when = (ms) => formatDeparture(ms).replace(/^Aujourd’hui/, 'aujourd’hui').replace(/^Demain/, 'demain');
+  const opts = (x) => [x.hospital && 'Hospitalisation', x.night && 'Nuit/WE/férié', x.metropole && 'Métropole'].filter(Boolean);
+
+  const lines = trips.length === 1
+    ? trips[0].fare.lines.map((l) => {
+        if (l.key === 'distance') {
+          const b = trips[0].fare.billableKm;
+          return [b > 0 ? `Distance (${num(b)} km × ${num(trips[0].rate.toFixed(2))} €)` : `Distance (${TARIFS.includedKm} premiers km inclus)`, amountText(l)];
+        }
+        return [l.detail ? `${l.label} (${l.detail})` : l.label, amountText(l)];
+      })
+    : trips.map((x, i) => [`Trajet ${i + 1} · ${x.from} → ${x.to}`, formatEuro(x.fare.total)]);
+  if (trips.length > 1 && ctx.rate) lines.push([`Transport partagé : ${ctx.patients} patients`, `− ${pct(ctx.rate)} / trajet`]);
+
+  const image = {
+    total: formatEuro(total),
+    lines,
+    link,
+    linkLabel: `${location.host}${location.pathname.replace(/index\.html$/, '').replace(/\/$/, '')}`,
+    trips: trips.map((x) => ({
+      from: x.from,
+      to: x.to,
+      chips: [
+        x.departAt && { text: `📅 ${when(x.departAt)}` },
+        { text: `${num(x.km)} km${x.durationMin ? ` · ${formatDuration(x.durationMin)}` : ''}` },
+        ...opts(x).map((o) => ({ text: o, on: true })),
+        { text: `${num(x.rate.toFixed(2))} €/km` },
+      ].filter(Boolean),
+    })),
+  };
+
+  const text = (kind) => {
+    const first = trips[0];
+    const head = kind === 'course'
+      ? `🚕 Course disponible${first.departAt ? ` ${when(first.departAt)}` : ''}`
+      : '🚕 Estimation taxi conventionné';
+    const body = trips.map((x) => `${x.from || 'Départ'} → ${x.to || 'Destination'}\n${[`${num(x.km)} km`, x.durationMin && formatDuration(x.durationMin), ...opts(x)].filter(Boolean).join(' · ')}`);
+    return [
+      head,
+      ...body,
+      trips.length > 1 ? `${ctx.patients} patients (transport partagé)` : null,
+      `${kind === 'course' ? 'Estimation' : 'Prix estimé'} : ${formatEuro(total)}`,
+      kind === 'course' ? 'Quelqu’un est intéressé ?' : null,
+      '',
+      `Détail du calcul : ${link}`,
+    ].filter((l) => l != null).join('\n');
+  };
+
+  return { image, text };
+}
+
+/** Lien de partage ouvert (?c=…) : remplit les trajets et affiche le prix détaillé. */
+function applySharedLink() {
+  const params = new URLSearchParams(location.search);
+  const shared = params.has('c') ? decodeShare(params.get('c')) : null;
+  if (!shared) return false;
+  state.trips = shared.map((x) => {
+    const t = newTrip();
+    t.origin = x.from;
+    t.destination = x.to;
+    t.distance = kmText(x.km);
+    t.rate = x.rate;
+    t.hospital = x.hospital;
+    t.night = x.night; // fixés comme à l'envoi : même prix à l'ouverture
+    t.metropole = x.metropole;
+    t.excluded = x.excluded;
+    t.soloLong = x.soloLong;
+    t.departAt = futureOrNull(x.departAt);
+    if (t.departAt) t.lastDepartAt = t.departAt;
+    t.apiDistance = x.durationMin ? x.km : null;
+    t.apiDuration = x.durationMin;
+    return t;
+  });
+  history.replaceState(null, '', location.pathname); // un rechargement repart d'une page vide
+  return true;
+}
+
 /* ---------- Démarrage ---------- */
 
-mountTrip(state.trips[0]);
+const fromLink = applySharedLink();
+state.trips.forEach(mountTrip);
 initInfoButtons();
+share = attachShare({ anchor: el.priceList, snapshot: shareSnapshot, toast });
 bind();
 update();
+if (fromLink) toast('Calcul partagé ouvert : vérifiez les options avant de facturer.');
 
 window.TaxiMeter = { setRouteResult };
