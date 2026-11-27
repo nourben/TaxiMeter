@@ -1,8 +1,11 @@
 // Supabase Edge Function « route » — calcul de distance via Google Routes API.
 //
 // Appel : POST {SUPABASE_URL}/functions/v1/route  (en-tête apikey: <clé publishable>)
-// Corps : { "origin": { "label": "...", "lat"?: 48.8, "lon"?: 2.3 }, "destination": { ... } }
-// Réponse 200 : { distanceKm, durationMin, routes: [...] }  (itinéraire le plus court en km)
+// Corps : { "origin": { "label": "...", "lat"?: 48.8, "lon"?: 2.3 }, "destination": { ... }, "departureTime"?: "2026-11-27T15:30:00.000Z" }
+//   departureTime (facultatif) : heure de départ future ; la durée tient alors compte du trafic prévu à cette heure.
+//   Absente, passée ou à moins d'une minute : calcul pour un départ immédiat (trafic en temps réel).
+// Réponse 200 : { distanceKm, durationMin, departureTime, routes: [...] }  (itinéraire le plus court en km ;
+//   departureTime vaut null pour un départ immédiat)
 // Erreurs : 400 requête invalide · 422 adresse non trouvée · 429 trop de calculs (par appareil) ou quota mensuel atteint
 //           · 502 Google indisponible
 // Protection : 10 calculs / minute, 60 / heure, 200 / 24 h par adresse IP (hachée), blocage de 24 h après
@@ -43,6 +46,19 @@ function toWaypoint(p: Place) {
     return { location: { latLng: { latitude: p.lat, longitude: p.lon } } };
   }
   return { address: String(p?.label ?? '').trim() };
+}
+
+const MAX_AHEAD_MS = 100 * 24 * 3600 * 1000;
+
+/**
+ * Heure de départ à transmettre à Google : une date future (au moins 1 minute, au plus 100 jours), sinon null.
+ * Google refuse une heure passée en voiture ; on calcule alors pour un départ immédiat.
+ */
+export function futureDeparture(value: unknown, now = Date.now()): string | null {
+  if (typeof value !== 'string' || !value) return null;
+  const t = Date.parse(value);
+  if (!Number.isFinite(t) || t < now + 60_000 || t > now + MAX_AHEAD_MS) return null;
+  return new Date(t).toISOString();
 }
 
 function validPlace(p: Place) {
@@ -111,7 +127,7 @@ async function handle(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, origin);
 
-  let body: { origin?: Place; destination?: Place };
+  let body: { origin?: Place; destination?: Place; departureTime?: string };
   try {
     body = await req.json();
   } catch {
@@ -150,6 +166,13 @@ async function handle(req: Request): Promise<Response> {
   if (calls == null) return json({ error: 'usage_unavailable', message: 'Compteur indisponible, calcul bloqué par sécurité.' }, 503, origin);
   if (calls > limit) return json({ error: 'quota', message: 'Limite mensuelle de calculs atteinte.' }, 429, origin);
 
+  // Départ différé : modèle de trafic « meilleure estimation » (historique + temps réel),
+  // proposé par Google uniquement avec TRAFFIC_AWARE_OPTIMAL.
+  const departureTime = futureDeparture(body.departureTime);
+  const timing = departureTime
+    ? { routingPreference: 'TRAFFIC_AWARE_OPTIMAL', trafficModel: 'BEST_GUESS', departureTime }
+    : { routingPreference: 'TRAFFIC_AWARE' };
+
   let res: Response;
   try {
     res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
@@ -163,7 +186,7 @@ async function handle(req: Request): Promise<Response> {
         origin: toWaypoint(body.origin as Place),
         destination: toWaypoint(body.destination as Place),
         travelMode: 'DRIVE',
-        routingPreference: 'TRAFFIC_AWARE',
+        ...timing,
         computeAlternativeRoutes: true,
         languageCode: 'fr-FR',
         regionCode: 'FR',
@@ -197,7 +220,7 @@ async function handle(req: Request): Promise<Response> {
   }
 
   const route = selectRoute(routes);
-  return json({ distanceKm: route.distanceKm, durationMin: route.durationMin, routes }, 200, origin);
+  return json({ distanceKm: route.distanceKm, durationMin: route.durationMin, departureTime, routes }, 200, origin);
 }
 
 Deno.serve(handle);

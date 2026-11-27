@@ -7,6 +7,7 @@ import { attachAutocomplete } from '../ui/autocomplete.js';
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
+import { attachWhenPicker, formatDeparture } from '../ui/when-picker.js';
 
 const RATE_KEY = 'taximeter.rate';
 /** Dernier tarif au km choisi, mémorisé dans le navigateur. */
@@ -72,6 +73,8 @@ function newTrip() {
     soloLong: false,
     copiedFromFirst: false,
     calculating: false,
+    calcKey: null,
+    departAt: null,
     routeMsg: null,
     geo: { origin: null, destination: null },
   };
@@ -146,6 +149,10 @@ const ICON_NIGHT =
 
 const ICON_ROUTE =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.5"/></svg>';
+const ICON_SWAP =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3.5 7.5 7 4l3.5 3.5M17 20V4M13.5 16.5 17 20l3.5-3.5"/></svg>';
+const ICON_CLOCK =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 const ICON_CLEAR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
 const ICON_TRASH =
@@ -173,9 +180,19 @@ function tripTemplate(t) {
       </div>
     </div>
     <div class="trip-body">
-      <div class="route">
-          <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ" aria-label="Départ (adresse ou ville)" enterkeyhint="next" /></div>
-          <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination (adresse ou ville)" enterkeyhint="next" /></div>
+      <div class="route-row">
+        <div class="route">
+            <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ" aria-label="Départ (adresse ou ville)" enterkeyhint="next" /></div>
+            <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination (adresse ou ville)" enterkeyhint="next" /></div>
+        </div>
+        <button type="button" class="swap-btn" data-a="swap" data-o="swap" aria-label="Inverser départ et destination" title="Inverser départ et destination" disabled>${ICON_SWAP}</button>
+      </div>
+      <div class="when-field">
+        <button type="button" class="when-btn">
+          ${ICON_CLOCK}
+          <span class="when-label">Départ <strong data-o="when">Maintenant</strong></span>
+          <span class="when-caret" aria-hidden="true">▾</span>
+        </button>
       </div>
       <div class="route-actions">
           <button type="button" class="calc-btn" data-a="calc" data-o="calc" disabled>
@@ -262,6 +279,13 @@ function mountTrip(t) {
       },
     });
   }
+  attachWhenPicker(node.querySelector('.when-field'), {
+    get: () => t.departAt,
+    set: (ms) => {
+      t.departAt = ms;
+      update();
+    },
+  });
   return node;
 }
 
@@ -295,18 +319,27 @@ function updateTrip(t, index, count) {
   sameKm.classList.toggle('hidden', index === 0 || firstKm == null || firstKm === km);
 
 
+  o('swap').disabled = !t.origin.trim() && !t.destination.trim();
+  o('when').textContent = formatDeparture(t.departAt);
+
+  // Calcul : désactivé une fois fait, réactivé dès que départ, destination ou heure changent
   const calc = o('calc');
   const ready = t.origin.trim().length >= 2 && t.destination.trim().length >= 2;
-  calc.disabled = !ready || t.calculating;
+  const done = t.calcKey != null && t.calcKey === calcKeyOf(t);
+  calc.disabled = !ready || t.calculating || done;
+  calc.classList.toggle('is-done', done && !t.calculating);
   o('calc-label').innerHTML = t.calculating
     ? 'Calcul en cours…<small>interrogation de Google</small>'
-    : 'Calculer la distance<small>itinéraire le plus court</small>';
+    : done
+      ? 'Distance calculée<small>modifiez le trajet pour recalculer</small>'
+      : 'Calculer la distance<small>itinéraire le plus court</small>';
   const msg = o('route-msg');
   msg.classList.toggle('hidden', !t.routeMsg);
   msg.classList.toggle('is-error', !!t.routeMsg?.error);
   const dur = !t.routeMsg?.error && Number.isFinite(t.routeMsg?.durationMin) ? formatDuration(t.routeMsg.durationMin) : '';
+  const at = t.routeMsg?.departAt ? `<small>départ ${esc(formatDeparture(t.routeMsg.departAt).replace(/^Aujourd’hui à /, ''))}</small>` : '';
   msg.innerHTML = t.routeMsg
-    ? `<span>${esc(t.routeMsg.text)}</span>${dur ? `<span class="route-time" title="Temps de trajet estimé">⏱ ${dur}</span>` : ''}`
+    ? `<span>${esc(t.routeMsg.text)}</span>${dur ? `<span class="route-time" title="Temps de trajet estimé, trafic compris">⏱ ${dur}${at}</span>` : ''}`
     : '';
 
   const maps = o('maps');
@@ -365,6 +398,12 @@ function updateTrip(t, index, count) {
   rateHint.innerHTML = nonDefault
     ? `<span class="warn-text">Tarif ${num(t.rate.toFixed(2))} €/km au lieu de ${num(BASE_RATE.toFixed(2))} €</span>`
     : '';
+}
+
+/** Ce qui détermine un calcul : départ, destination et heure de départ (une heure passée vaut « maintenant »). */
+function calcKeyOf(t) {
+  const at = t.departAt && t.departAt > Date.now() + 60_000 ? t.departAt : 'now';
+  return `${t.origin.trim()}|${t.destination.trim()}|${at}`;
 }
 
 function formatDuration(min) {
@@ -509,6 +548,17 @@ function removeTrip(t) {
   update();
 }
 
+/** Inverse départ et destination (texte et coordonnées déjà trouvées). */
+function swapPlaces(t) {
+  [t.origin, t.destination] = [t.destination, t.origin];
+  t.geo = { origin: t.geo.destination, destination: t.geo.origin };
+  for (const key of ['origin', 'destination']) {
+    clearTimeout(geoTimers.get(`${t.id}-${key}`));
+    tripNode(t).querySelector(`[data-f="${key}"]`).value = t[key];
+  }
+  t.routeMsg = null;
+}
+
 function resetAll() {
   el.trips.innerHTML = '';
   state.trips = [newTrip()];
@@ -588,6 +638,9 @@ function bind() {
       case 'calc':
         calculateDistance(t);
         return;
+      case 'swap':
+        swapPlaces(t);
+        break;
       case 'exclude':
         t.excluded = !t.excluded;
         break;
@@ -645,14 +698,19 @@ async function calculateDistance(t) {
   if (t.calculating) return;
   t.calculating = true;
   t.routeMsg = null;
+  const key = calcKeyOf(t);
   update();
   logDistanceCalculation(); // statistiques : une demande de calcul de distance
   try {
-    const r = await computeRoute(placeForRoute(t, 'origin'), placeForRoute(t, 'destination'));
+    const departAt = key.endsWith('|now') ? null : t.departAt;
+    const r = await computeRoute(placeForRoute(t, 'origin'), placeForRoute(t, 'destination'), departAt);
     if (!state.trips.includes(t)) return;
     const index = state.trips.indexOf(t);
+    t.calcKey = key;
     t.routeMsg = {
       durationMin: r.durationMin,
+      // Heure affichée seulement si le serveur l'a bien prise en compte
+      departAt: r.departureTime ? Date.parse(r.departureTime) : null,
       text: `Distance calculée : ${fmtKm(r.distanceKm)} (itinéraire le plus court).`,
     };
     t.calculating = false;
