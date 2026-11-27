@@ -191,7 +191,7 @@ function tripTemplate(t) {
       <div class="when-field">
         <button type="button" class="when-btn">
           ${ICON_CLOCK}
-          <span class="when-label">Départ <strong data-o="when">Maintenant</strong></span>
+          <span class="when-label"><span class="wide-only">Départ </span><strong data-o="when">Maintenant</strong></span>
           <span class="when-caret" aria-hidden="true">▾</span>
         </button>
         <label class="when-now hidden" data-o="when-now" title="Calculer pour un départ immédiat">

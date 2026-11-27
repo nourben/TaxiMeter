@@ -898,8 +898,10 @@ input:focus {
   align-items: center;
   gap: 6px 8px;
 }
-.opt-wide {
-  width: min(100% - 32px, 375px);
+.opt-wide,
+.when-btn {
+  /* Largeur commune des contrôles d'un trajet (Départ, distance, options) */
+  width: min(100% - 32px, 412px);
 }
 /* Texte d'info à droite du bouton / champ (passe dessous si l'écran est trop étroit) */
 .opt-side {
@@ -1083,8 +1085,9 @@ input:focus {
   .opt-row {
     flex-wrap: nowrap;
   }
-  .opt-row .opt-wide {
-    width: 64%;
+  .opt-row .opt-wide,
+  .when-btn {
+    width: 70.4%;
     flex: none;
   }
   .opt-wide.segmented label {
@@ -1652,7 +1655,6 @@ input:focus {
 .when-field {
   position: relative;
   margin-top: 6px;
-  padding-left: 2px;
 }
 .when-field.is-open {
   z-index: 6;
@@ -1684,6 +1686,7 @@ input:focus {
   margin-left: 2px;
 }
 .when-caret {
+  margin-left: auto;
   font-size: 0.65rem;
 }
 .when-field.is-open .when-btn,
@@ -1817,14 +1820,14 @@ input:focus {
 .when-field {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
 }
 .when-now {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.8rem;
+  white-space: nowrap;
+  font-size: 0.78rem;
   color: var(--text-muted);
   cursor: pointer;
   user-select: none;
@@ -1837,4 +1840,23 @@ input:focus {
   height: 15px;
   margin: 0;
   accent-color: var(--accent-strong);
+}
+
+.when-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .when-field {
+    gap: 6px;
+  }
+  .when-now {
+    gap: 4px;
+    font-size: 0.74rem;
+  }
+  .when-btn strong {
+    margin-left: 0;
+  }
 }
