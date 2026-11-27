@@ -28,6 +28,12 @@ export async function visitsPerPeriod(granularity, now = new Date()) {
   });
 }
 
+/** Clics sur « Ne plus être compté » / « Accepter d'être compté » (fonction SQL `audience_optout_stats`). */
+export async function audienceOptOutStats() {
+  const [r] = (await rpc('audience_optout_stats')) ?? [];
+  return { optouts: Number(r?.optouts ?? 0), optins: Number(r?.optins ?? 0), optouts30d: Number(r?.optouts_30d ?? 0) };
+}
+
 /** Visiteurs des 30 derniers jours selon le nombre de jours de visite : [{ bracket, visitors }]. */
 export async function visitorFrequency() {
   const rows = await rpc('visitor_frequency');

@@ -1,5 +1,5 @@
 import { GRANULARITIES } from '../core/periods.js';
-import { estimatesPerPeriod, visitsPerPeriod, visitorFrequency } from '../services/stats.js';
+import { estimatesPerPeriod, visitsPerPeriod, visitorFrequency, audienceOptOutStats } from '../services/stats.js';
 
 const fmt = (n) => n.toLocaleString('fr-FR');
 const UNIT = { day: 'jour', week: 'semaine', month: 'mois', year: 'an' };
@@ -168,11 +168,29 @@ function loadFrequency() {
       freq.innerHTML = '<tr><td colspan="3">Indisponible pour le moment.</td></tr>';
     });
 }
+// Refus de la mesure d'audience (bouton de la page Confidentialité)
+const optEl = document.getElementById('audience-optouts');
+function loadOptOuts() {
+  if (!optEl) return;
+  audienceOptOutStats()
+    .then(({ optouts, optins, optouts30d }) => {
+      const s = (n, one, many) => `${fmt(n)} ${n > 1 ? many : one}`;
+      optEl.textContent = optouts
+        ? `Refus de la mesure d’audience : ${s(optouts, 'clic', 'clics')} sur « Ne plus être compté » (dont ${fmt(optouts30d)} sur 30 jours)` +
+          (optins ? `, ${s(optins, 'réactivation', 'réactivations')}.` : '.')
+        : 'Personne n’a refusé la mesure d’audience pour l’instant.';
+    })
+    .catch(() => {
+      optEl.textContent = '';
+    });
+}
+
 // Chargé seulement à la première ouverture du module Visiteurs
 if (freq && freqHost) {
   freqHost.addEventListener('toggle', function once() {
     if (!freqHost.open) return;
     freqHost.removeEventListener('toggle', once);
     loadFrequency();
+    loadOptOuts();
   });
 }

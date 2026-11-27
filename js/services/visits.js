@@ -15,7 +15,14 @@ export function isOptedOut() {
   }
 }
 
+/** Compte un clic sur le bouton de refus / réactivation (sans identifiant ni IP). */
+function logOptOut(optOut) {
+  if (LOCAL_HOSTS.includes(location.hostname)) return;
+  insert('audience_optouts', { kind: optOut ? 'optout' : 'optin' }).catch(() => {});
+}
+
 export function setOptOut(optOut) {
+  logOptOut(optOut);
   try {
     if (optOut) {
       localStorage.setItem(OPT_OUT_KEY, '1');
