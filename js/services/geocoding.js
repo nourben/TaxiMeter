@@ -78,8 +78,8 @@ function poiToPlace(f) {
 /**
  * Suggestions pendant la frappe : adresses / rues / communes ET points d'intérêt
  * (deux requêtes en parallèle, fusionnées par pertinence).
- * Si un centre est donné (départ choisi ou département du chauffeur), il est transmis à l'IGN
- * (lat / lon) et les lieux à moins de 70 km passent en tête de liste, les autres ensuite.
+ * Si un centre est donné (départ choisi, département du chauffeur ou zone IP), il est transmis à l'IGN
+ * (lat / lon) et les lieux à moins de 55 km passent en tête de liste, les autres ensuite.
  */
 export async function suggest(text, signal, center = null) {
   const q = String(text || '').trim();

@@ -1,11 +1,28 @@
 /**
  * Mise en avant des suggestions d'adresses proches.
- * Centre utilisé : pour la destination, le départ déjà choisi ; sinon le département mémorisé du chauffeur.
+ * Centre utilisé : pour la destination, le départ déjà choisi ; sinon le département mémorisé du chauffeur
+ * (choisi dans la recherche de tarif) ; sinon sa zone estimée d'après son adresse IP.
  * Les lieux à moins de NEARBY_KM du centre passent en tête, dans leur ordre de pertinence ; les autres suivent.
  */
 import { DEPT_CENTERS } from '../config/dept-centers.js';
 
-export const NEARBY_KM = 70;
+export const NEARBY_KM = 55;
+
+// Codes pays renvoyés par la géolocalisation IP pour la France (métropole et outre-mer)
+const FRANCE_CODES = new Set(['FR', 'GP', 'MQ', 'GF', 'RE', 'YT', 'PM', 'BL', 'MF', 'NC', 'PF', 'WF']);
+
+export function isFrance(countryCode) {
+  return FRANCE_CODES.has(String(countryCode ?? '').toUpperCase());
+}
+
+/** Zone IP utilisable : une position en France, sinon null. */
+export function validZone(z) {
+  if (!z || !isFrance(z.country)) return null;
+  const lat = Number(z.lat);
+  const lon = Number(z.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  return { lat, lon, country: String(z.country).toUpperCase() };
+}
 
 /** Distance à vol d'oiseau en km (formule de haversine). */
 export function distanceKm(a, b) {
@@ -23,11 +40,13 @@ const hasPos = (p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lon);
  * @param {object} opts
  * @param {object|null} [opts.origin] départ choisi dans les suggestions (pour le champ destination)
  * @param {string|null} [opts.dept] code du département mémorisé
+ * @param {object|null} [opts.ip] zone estimée d'après l'adresse IP
  */
-export function suggestCenter({ origin = null, dept = null } = {}) {
+export function suggestCenter({ origin = null, dept = null, ip = null } = {}) {
   if (hasPos(origin)) return { lat: origin.lat, lon: origin.lon, source: 'départ' };
   const c = dept && DEPT_CENTERS[dept];
-  return c ? { lat: c[0], lon: c[1], source: `département ${dept}` } : null;
+  if (c) return { lat: c[0], lon: c[1], source: `département ${dept}` };
+  return hasPos(ip) ? { lat: ip.lat, lon: ip.lon, source: 'IP' } : null;
 }
 
 /**

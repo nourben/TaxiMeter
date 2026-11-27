@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { distanceKm, prioritizeNearby, suggestCenter } from '../js/core/nearby.js';
+import { distanceKm, isFrance, prioritizeNearby, suggestCenter, validZone, NEARBY_KM } from '../js/core/nearby.js';
 import { DEPT_CENTERS } from '../js/config/dept-centers.js';
 import { DEPARTMENT_RATES } from '../js/config/tarifs.js';
 
 const LYON = { lat: 45.764, lon: 4.8357 };
 const VIENNE = { label: 'Vienne', lat: 45.525, lon: 4.874 }; // ~27 km
+const BOURGOIN = { label: 'Bourgoin', lat: 45.586, lon: 5.274 }; // ~40 km
+const ANNONAY = { label: 'Annonay', lat: 45.24, lon: 4.67 }; // ~60 km
 const GRENOBLE = { label: 'Grenoble', lat: 45.188, lon: 5.724 }; // ~95 km
 const PARIS = { label: 'Paris', lat: 48.857, lon: 2.352 };
 
@@ -15,7 +17,13 @@ test('distance à vol d’oiseau', () => {
   assert.ok(distanceKm(LYON, GRENOBLE) > 70);
 });
 
-test('lieux à moins de 70 km en tête, ordre conservé dans chaque groupe', () => {
+test('rayon de 55 km', () => {
+  assert.equal(NEARBY_KM, 55);
+  const out = prioritizeNearby([ANNONAY, BOURGOIN], LYON);
+  assert.deepEqual(out.map((x) => x.label), ['Bourgoin', 'Annonay']);
+});
+
+test('lieux proches en tête, ordre conservé dans chaque groupe', () => {
   const out = prioritizeNearby([PARIS, GRENOBLE, VIENNE, { label: 'Sans position' }], LYON);
   assert.deepEqual(out.map((x) => x.label), ['Vienne', 'Paris', 'Grenoble', 'Sans position']);
   const items = [PARIS, VIENNE];
@@ -29,6 +37,20 @@ test('centre : départ choisi, sinon département mémorisé, sinon aucun', () =
   assert.ok(distanceKm(c, { lat: 48.63, lon: 2.44 }) < 5); // Évry
   assert.equal(suggestCenter({ dept: 'XX' }), null);
   assert.equal(suggestCenter(), null);
+});
+
+test('centre : le département passe avant la zone IP, la zone IP sert à défaut', () => {
+  const ip = { ...LYON };
+  assert.equal(suggestCenter({ dept: '91', ip }).source, 'département 91');
+  assert.equal(suggestCenter({ ip }).source, 'IP');
+  assert.equal(suggestCenter({ origin: PARIS, ip }).source, 'départ');
+});
+
+test('zone IP : France uniquement', () => {
+  assert.equal(validZone({ ...LYON, country: 'DE' }), null);
+  assert.equal(validZone({ country: 'FR' }), null);
+  assert.ok(validZone({ lat: -21.1, lon: 55.5, country: 're' })); // La Réunion
+  assert.equal(isFrance('US'), false);
 });
 
 test('chaque département du sélecteur a un centre', () => {

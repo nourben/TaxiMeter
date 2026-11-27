@@ -5,6 +5,7 @@ import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
 import { suggestCenter } from '../core/nearby.js';
+import { getZone, getZoneDebug } from '../services/zone.js';
 
 const DEPT_KEY = 'taximeter.dept';
 /** Département choisi dans la recherche de tarif, mémorisé pour centrer les suggestions d'adresses. */
@@ -26,7 +27,13 @@ function saveDept(code) {
 // DEBUG TEMPORAIRE : affiche le centre des suggestions sous le prix
 function showCenterDebug(key, center) {
   const out = document.getElementById('zone-debug');
-  if (out) out.textContent = `Suggestions ${key === 'origin' ? 'départ' : 'destination'} : ${center ? `autour du ${center.source}` : 'aucun centre'}`;
+  if (!out) return;
+  const ipInfo = getZoneDebug();
+  const where = !center ? 'aucun centre'
+    : center.source === 'IP' ? `autour de l’IP (${ipInfo?.city ?? '?'}, ${ipInfo?.postal ?? '?'})`
+    : `autour du ${center.source}`;
+  const err = !center && ipInfo?.error ? ` – IP : ${ipInfo.error}` : '';
+  out.textContent = `Suggestions ${key === 'origin' ? 'départ' : 'destination'} : ${where}${err}`;
 }
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
@@ -325,12 +332,16 @@ function mountTrip(t) {
   }
   for (const key of ['origin', 'destination']) {
     const input = node.querySelector(`[data-f="${key}"]`);
+    // Zone IP demandée dès l'entrée dans le champ, pour être prête aux premières suggestions
+    input.addEventListener('focus', () => getZone());
     attachAutocomplete(input, {
-      // Destination : autour du départ choisi ; sinon autour du département mémorisé
-      fetch: (q, signal) => {
+      // Destination : autour du départ choisi. Sinon (et pour le départ) : département mémorisé, puis zone IP
+      fetch: async (q, signal) => {
         const g = t.geo.origin;
         const origin = key === 'destination' && g && g.query === t.origin.trim() ? g : null;
-        const center = suggestCenter({ origin, dept: savedDept() });
+        const dept = savedDept();
+        const ip = origin || dept ? null : await getZone();
+        const center = suggestCenter({ origin, dept, ip });
         showCenterDebug(key, center);
         return suggest(q, signal, center);
       },

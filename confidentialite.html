@@ -49,7 +49,7 @@
         <p class="muted small">Pour savoir combien de visiteurs refusent la mesure, chaque clic sur ce bouton est compté, sans identifiant ni adresse IP : seuls le choix (refus ou réactivation) et la date sont enregistrés, puis supprimés après 25 mois.</p>
 
         <h2>4. Suggestions d’adresses proches</h2>
-        <p>Pour proposer en premier les adresses proches (dans un rayon d’environ 70 km), la position du départ choisi est utilisée pour les suggestions de destination. Si vous avez recherché un tarif par département, ce département est mémorisé dans votre navigateur et sert aussi de point de référence. Seules ces coordonnées (celles du départ, ou un point de référence du département) sont envoyées à l’IGN avec votre saisie, pour trier les suggestions ; aucune géolocalisation de votre appareil ni de votre adresse IP n’est utilisée.</p>
+        <p>Pour proposer en premier les adresses proches (dans un rayon d’environ 55 km), un point de référence est utilisé : pour la destination, la position du départ choisi ; sinon, le département que vous avez recherché pour le tarif (mémorisé dans votre navigateur) ; à défaut, votre zone estimée d’après votre adresse IP. Cette estimation est faite par le service <strong>freeipapi.com</strong>, interrogé directement par votre navigateur quand vous commencez à saisir une adresse ; votre adresse IP n’est pas conservée par le site, et seule une position approximative est gardée dans votre navigateur le temps de la visite. Hors de France, aucune zone n’est utilisée. Les coordonnées du point de référence sont envoyées à l’IGN avec votre saisie, pour trier les suggestions.</p>
 
         <h2>5. Stockage local du navigateur</h2>
         <p>Le thème (clair/sombre), le dernier tarif au kilomètre choisi, le dernier département recherché, la période choisie sur la page Statistiques et l’identifiant de mesure d’audience sont mémorisés dans votre navigateur. Vous pouvez les effacer depuis les réglages de celui-ci.</p>
@@ -60,6 +60,7 @@
           <li><strong>Supabase</strong> : base de données et fonctions serveur, hébergées dans l’Union européenne.</li>
           <li><strong>Google</strong> (États-Unis) : calcul des distances (adresses saisies).</li>
           <li><strong>IGN</strong> (France) : suggestions d’adresses.</li>
+          <li><strong>freeipapi.com</strong> (serveurs en Europe) : estimation de votre zone d’après votre adresse IP, pour mettre en avant les adresses proches (adresse IP non conservée par le site).</li>
           <li><strong>Resend</strong> (États-Unis) : envoi par e-mail des messages du formulaire de contact (copie conservée 30 jours).</li>
         </ul>
         <p>Les transferts vers les États-Unis reposent sur les garanties prévues par le RGPD (cadre de protection des données UE–États-Unis ou clauses contractuelles types).</p>

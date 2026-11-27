@@ -1,6 +1,6 @@
 /**
  * Point de référence de chaque département (préfecture, coordonnées approchées),
- * pour mettre en avant les suggestions d'adresses à moins de 70 km du département du chauffeur.
+ * pour mettre en avant les suggestions d'adresses à moins de 55 km du département du chauffeur.
  */
 export const DEPT_CENTERS = {
   '01': [46.205, 5.226], '02': [49.564, 3.62], '03': [46.566, 3.333], '04': [44.092, 6.236],
