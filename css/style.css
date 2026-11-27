@@ -1813,3 +1813,28 @@ input:focus {
   color: var(--text-muted);
   text-align: right;
 }
+
+.when-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.when-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.when-now.hidden {
+  display: none;
+}
+.when-now input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--accent-strong);
+}

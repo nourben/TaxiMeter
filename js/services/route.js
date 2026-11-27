@@ -12,11 +12,11 @@ export class RouteError extends Error {
 /**
  * @param {{ label:string, lat?:number, lon?:number }} origin
  * @param {{ label:string, lat?:number, lon?:number }} destination
- * @param {number|null} [departAt] heure de départ (ms) ; absente ou passée : départ immédiat
+ * @param {number|null} [departAt] heure de départ future (ms) ; null : appel sans heure (départ immédiat)
  * @returns {Promise<{ distanceKm:number, durationMin:number, departureTime:string|null, routes:Array }>}
  */
 export async function computeRoute(origin, destination, departAt = null) {
-  const departureTime = departAt && departAt > Date.now() + 60_000 ? new Date(departAt).toISOString() : undefined;
+  const departureTime = departAt ? new Date(departAt).toISOString() : undefined;
   let res;
   try {
     res = await fetch(`${SUPABASE_URL}/functions/v1/route`, {

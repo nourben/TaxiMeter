@@ -7,7 +7,7 @@ import { attachAutocomplete } from '../ui/autocomplete.js';
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
-import { attachWhenPicker, formatDeparture } from '../ui/when-picker.js';
+import { attachWhenPicker, formatDeparture, futureOrNull } from '../ui/when-picker.js';
 
 const RATE_KEY = 'taximeter.rate';
 /** Dernier tarif au km choisi, mémorisé dans le navigateur. */
@@ -75,6 +75,7 @@ function newTrip() {
     calculating: false,
     calcKey: null,
     departAt: null,
+    lastDepartAt: null, // dernière heure choisie, reprise en décochant « Maintenant »
     routeMsg: null,
     geo: { origin: null, destination: null },
   };
@@ -193,6 +194,10 @@ function tripTemplate(t) {
           <span class="when-label">Départ <strong data-o="when">Maintenant</strong></span>
           <span class="when-caret" aria-hidden="true">▾</span>
         </button>
+        <label class="when-now hidden" data-o="when-now" title="Calculer pour un départ immédiat">
+          <input type="checkbox" data-f="departNow" />
+          <span>Maintenant</span>
+        </label>
       </div>
       <div class="route-actions">
           <button type="button" class="calc-btn" data-a="calc" data-o="calc" disabled>
@@ -279,13 +284,17 @@ function mountTrip(t) {
       },
     });
   }
-  attachWhenPicker(node.querySelector('.when-field'), {
-    get: () => t.departAt,
-    set: (ms) => {
-      t.departAt = ms;
-      update();
-    },
-  });
+  pickers.set(
+    t.id,
+    attachWhenPicker(node.querySelector('.when-field'), {
+      get: () => t.departAt,
+      set: (ms) => {
+        t.departAt = ms;
+        if (ms != null) t.lastDepartAt = ms;
+        update();
+      },
+    }),
+  );
   return node;
 }
 
@@ -320,7 +329,11 @@ function updateTrip(t, index, count) {
 
 
   o('swap').disabled = !t.origin.trim() && !t.destination.trim();
-  o('when').textContent = formatDeparture(t.departAt);
+  // Une heure dépassée (ou l'heure actuelle) repasse en « Maintenant »
+  const departAt = futureOrNull(t.departAt);
+  o('when').textContent = formatDeparture(departAt);
+  o('when-now').classList.toggle('hidden', t.lastDepartAt == null);
+  o('when-now').querySelector('input').checked = departAt == null;
 
   // Calcul : désactivé une fois fait, réactivé dès que départ, destination ou heure changent
   const calc = o('calc');
@@ -400,7 +413,7 @@ function updateTrip(t, index, count) {
 
 /** Ce qui détermine un calcul : départ, destination et heure de départ (une heure passée vaut « maintenant »). */
 function calcKeyOf(t) {
-  const at = t.departAt && t.departAt > Date.now() + 60_000 ? t.departAt : 'now';
+  const at = futureOrNull(t.departAt) ?? 'now';
   return `${t.origin.trim()}|${t.destination.trim()}|${at}`;
 }
 
@@ -514,6 +527,7 @@ function tripFromEvent(e) {
 }
 
 const geoTimers = new Map();
+const pickers = new Map();
 function scheduleGeocode(t, key) {
   const k = `${t.id}-${key}`;
   clearTimeout(geoTimers.get(k));
@@ -542,6 +556,7 @@ function addTrip() {
 function removeTrip(t) {
   state.trips = state.trips.filter((x) => x !== t);
   state.openFares.delete(t.id);
+  pickers.delete(t.id);
   tripNode(t)?.remove();
   update();
 }
@@ -559,6 +574,7 @@ function swapPlaces(t) {
 
 function resetAll() {
   el.trips.innerHTML = '';
+  pickers.clear();
   state.trips = [newTrip()];
   state.openFares.clear();
   mountTrip(state.trips[0]);
@@ -596,6 +612,16 @@ function bind() {
       savePreferredRate(t.rate);
     }
     else if (f === 'soloLong') t.soloLong = e.target.checked;
+    else if (f === 'departNow') {
+      if (e.target.checked) t.departAt = null;
+      else if (futureOrNull(t.lastDepartAt) != null) t.departAt = t.lastDepartAt;
+      else {
+        // Heure mémorisée dépassée : on ouvre le sélecteur pour en choisir une nouvelle
+        e.target.checked = true;
+        pickers.get(t.id)?.open();
+        return;
+      }
+    }
     else return;
     update();
   });
@@ -700,7 +726,7 @@ async function calculateDistance(t) {
   update();
   logDistanceCalculation(); // statistiques : une demande de calcul de distance
   try {
-    const departAt = key.endsWith('|now') ? null : t.departAt;
+    const departAt = futureOrNull(t.departAt); // null : appel sans heure (départ immédiat)
     const r = await computeRoute(placeForRoute(t, 'origin'), placeForRoute(t, 'destination'), departAt);
     if (!state.trips.includes(t)) return;
     const index = state.trips.indexOf(t);

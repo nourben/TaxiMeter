@@ -5,6 +5,10 @@ const DAYS = 14; // aujourd'hui + 13 jours
 const STEP = 5; // minutes
 const ROW = 34; // hauteur d'une ligne de roue (px), identique au CSS
 const SHORTCUTS = [1, 2, 3, 4]; // heures
+/** Une heure à moins de 5 minutes (ou passée) compte comme « maintenant » : aucune heure n'est envoyée au serveur. */
+export const NOW_MARGIN = 5 * 60_000;
+/** Heure de départ réellement utilisée : l'heure choisie si elle est à venir, sinon null (départ immédiat). */
+export const futureOrNull = (ms, now = Date.now()) => (ms != null && ms > now + NOW_MARGIN ? ms : null);
 
 const pad = (n) => String(n).padStart(2, '0');
 const dayStart = (ms) => {
@@ -105,10 +109,11 @@ export function attachWhenPicker(wrap, { get, set }) {
 
   function showSummary() {
     const ms = get();
+    const passed = ms != null && futureOrNull(ms) == null;
     if (ms == null) summary.textContent = 'Départ immédiat';
-    else if (ms <= Date.now() + 60_000) summary.textContent = 'Heure passée : calcul pour un départ immédiat';
+    else if (passed) summary.textContent = 'Heure actuelle ou passée : départ immédiat';
     else summary.textContent = `Départ ${formatDelay(ms)}`;
-    summary.classList.toggle('is-warn', ms != null && ms <= Date.now() + 60_000);
+    summary.classList.toggle('is-warn', passed);
   }
 
   function select(w, i, { scroll = true, commit = true } = {}) {
@@ -133,6 +138,8 @@ export function attachWhenPicker(wrap, { get, set }) {
     w.el.addEventListener('scroll', () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
+        // Panneau fermé entre-temps : la roue masquée revient à 0, ce n'est pas un choix
+        if (panel.classList.contains('hidden')) return;
         const i = Math.round(w.el.scrollTop / ROW);
         if (i !== w.idx) select(w, i, { scroll: false });
       }, 120);
@@ -172,6 +179,11 @@ export function attachWhenPicker(wrap, { get, set }) {
 
   function close(focus = false) {
     if (panel.classList.contains('hidden')) return;
+    // Un défilement encore en cours est validé avant de fermer
+    for (const w of Object.values(wheels)) {
+      const i = Math.round(w.el.scrollTop / ROW);
+      if (i !== w.idx) select(w, i, { scroll: false });
+    }
     panel.classList.add('hidden');
     btn.setAttribute('aria-expanded', 'false');
     wrap.classList.remove('is-open');
@@ -203,5 +215,5 @@ export function attachWhenPicker(wrap, { get, set }) {
     if (!wrap.contains(e.target)) close();
   });
 
-  return { close };
+  return { open, close };
 }
