@@ -13,6 +13,7 @@ import { shortestRoute, fasterAlternative } from '../core/route-choice.js';
 import { nightRateFor } from '../core/period.js';
 import { encodeShare, decodeShare, shortPlace } from '../core/share-link.js';
 import { attachShare } from '../ui/share.js';
+import { FEATURES } from '../config/features.js';
 
 const RATE_KEY = 'taximeter.rate';
 /** Dernier tarif au km choisi, mémorisé dans le navigateur. */
@@ -1071,7 +1072,7 @@ function applySharedLink() {
 const fromLink = applySharedLink();
 state.trips.forEach(mountTrip);
 initInfoButtons();
-share = attachShare({ anchor: el.priceList, snapshot: shareSnapshot, toast });
+if (FEATURES.shareButton) share = attachShare({ anchor: el.priceList, snapshot: shareSnapshot, toast });
 bind();
 update();
 if (fromLink) toast('Calcul partagé ouvert : vérifiez les options avant de facturer.');
