@@ -2060,11 +2060,6 @@ input:focus {
 .segmented .seg-other:focus-within {
   outline: 2px solid var(--focus);
 }
-.opt-rate .segmented.seg-sm label {
-  padding-left: 4px;
-  padding-right: 4px;
-  white-space: nowrap;
-}
 
 /* Recherche du tarif par département (info « i » des tarifs) */
 .dept-finder {

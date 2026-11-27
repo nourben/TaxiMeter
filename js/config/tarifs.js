@@ -11,8 +11,8 @@ export const TARIFS = {
   includedKm: 4,
 
   /** Tarifs kilométriques proposés (€/km), selon le département de la licence — le premier est la valeur par défaut
-   *  (convention-cadre : 1,07 € notamment en 77, 78, 91, 92, 93, 94, 95 ; 1,22 € à Paris) */
-  ratesPerKm: [1.07, 1.2, 1.22], // boutons rapides ; les autres tarifs sont dans la liste « Autres »
+   *  (1,07 € : 77, 78, 91 à 95… ; 1,22 € : Paris…) */
+  ratesPerKm: [1.07, 1.22], // boutons rapides ; les autres tarifs sont dans la liste « Autres »
   defaultRatePerKm: 1.07,
 
   /**
