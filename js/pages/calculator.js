@@ -423,7 +423,7 @@ function updateTrip(t, index, count) {
 
   const autoN = autoNight(t);
   o('hint-night').textContent = t.night == null
-    ? `Automatique : ${autoN.active ? 'activée' : 'non activée'} (${autoN.reason})`
+    ? `Automatique : ${autoN.active ? 'activée' : 'non activée'}, ${autoN.reason}`
     : `${t.night ? 'Activée' : 'Retirée'} à la main`;
   o('night-auto').classList.toggle('hidden', t.night == null);
 
