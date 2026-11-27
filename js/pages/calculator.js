@@ -257,6 +257,7 @@ function tripTemplate(t) {
         </div>
         <div class="opt-row opt-rate">
           <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Tarif kilométrique">${rates}</div>
+          <button class="info-btn" data-info="tarifkm" aria-label="Aide sur le tarif kilométrique">i</button>
           <p class="trip-hint opt-side hidden" data-o="hint-rate"></p>
         </div>
         <div class="opt-row opt-solo hidden" data-o="solo-row">

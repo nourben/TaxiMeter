@@ -31,6 +31,10 @@ export const INFO_CONTENT = {
     <p><strong>Transport partagé</strong> (patients transportés ensemble) : chaque trajet reçoit obligatoirement un abattement de 23 % pour 2 patients, 35 % pour 3, 37 % pour 4 ou plus, sur la totalité de son prix. Un trajet fait séparément doit être exclu du prix.</p>
     <p>Un patient <strong>seul dans le véhicule sur 30 km ou plus</strong> n’a qu’un abattement de 5 %, sur sa facture uniquement.</p>
     <p>Source : convention-cadre nationale des taxis conventionnés (JO du 8 août 2025).</p>`,
+  tarifkm: `
+    <p>Le tarif au km dépend du <strong>département de la licence</strong> du taxi (convention Sécu 2025), facturé à partir du ${t.includedKm + 1}<sup>e</sup> km.</p>
+    <p><strong>1,07 €</strong> : 77, 78, 91, 92, 93, 94, 95 et de nombreux départements (Rhône, Gironde, Bas-Rhin…) · <strong>1,20 €</strong> : Aisne, Nord, Oise, Pas-de-Calais, Vaucluse · <strong>1,22 €</strong> : Paris, Isère, Haute-Savoie.</p>
+    <p>Ailleurs, le tarif va de 1,08 € à 1,27 € selon le département : il n’est pas encore proposé ici.</p>`,
 };
 
 let counter = 0;
