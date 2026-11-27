@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { distanceKm, isFrance, prioritizeNearby, validZone } from '../js/core/nearby.js';
+import { distanceKm, prioritizeNearby, suggestCenter } from '../js/core/nearby.js';
+import { DEPT_CENTERS } from '../js/config/dept-centers.js';
+import { DEPARTMENT_RATES } from '../js/config/tarifs.js';
 
 const LYON = { lat: 45.764, lon: 4.8357 };
 const VIENNE = { label: 'Vienne', lat: 45.525, lon: 4.874 }; // ~27 km
@@ -14,17 +16,21 @@ test('distance à vol d’oiseau', () => {
 });
 
 test('lieux à moins de 70 km en tête, ordre conservé dans chaque groupe', () => {
-  const zone = validZone({ ...LYON, country: 'FR' });
-  const out = prioritizeNearby([PARIS, GRENOBLE, VIENNE, { label: 'Sans position' }], zone);
+  const out = prioritizeNearby([PARIS, GRENOBLE, VIENNE, { label: 'Sans position' }], LYON);
   assert.deepEqual(out.map((x) => x.label), ['Vienne', 'Paris', 'Grenoble', 'Sans position']);
-});
-
-test('pas de zone hors de France ni sans position', () => {
-  assert.equal(validZone({ ...LYON, country: 'DE' }), null);
-  assert.equal(validZone({ country: 'FR' }), null);
-  assert.equal(validZone(null), null);
-  assert.ok(validZone({ lat: -21.1, lon: 55.5, country: 're' })); // La Réunion
-  assert.equal(isFrance('US'), false);
   const items = [PARIS, VIENNE];
   assert.equal(prioritizeNearby(items, null), items);
+});
+
+test('centre : départ choisi, sinon département mémorisé, sinon aucun', () => {
+  assert.equal(suggestCenter({ origin: LYON, dept: '91' }).source, 'départ');
+  const c = suggestCenter({ origin: { label: 'texte libre' }, dept: '91' });
+  assert.equal(c.source, 'département 91');
+  assert.ok(distanceKm(c, { lat: 48.63, lon: 2.44 }) < 5); // Évry
+  assert.equal(suggestCenter({ dept: 'XX' }), null);
+  assert.equal(suggestCenter(), null);
+});
+
+test('chaque département du sélecteur a un centre', () => {
+  for (const [code] of DEPARTMENT_RATES) assert.ok(DEPT_CENTERS[code], code);
 });

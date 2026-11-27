@@ -4,18 +4,30 @@ import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
 import { geocode, suggest } from '../services/geocoding.js';
 import { attachAutocomplete } from '../ui/autocomplete.js';
-import { getZone, getZoneDebug } from '../services/zone.js';
+import { suggestCenter } from '../core/nearby.js';
 
-// DEBUG TEMPORAIRE : affiche la zone détectée sous le prix
-function showZoneDebug(info) {
-  const el = document.getElementById('zone-debug');
-  if (!el || !info) return;
-  el.textContent = info.error
-    ? `Zone : non trouvée (${info.error})`
-    : `Zone : ${info.city ?? '?'} (${info.postal ?? '?'}) – ${info.region ?? '?'}, ${info.country ?? '?'}`;
+const DEPT_KEY = 'taximeter.dept';
+/** Département choisi dans la recherche de tarif, mémorisé pour centrer les suggestions d'adresses. */
+function savedDept() {
+  try {
+    return localStorage.getItem(DEPT_KEY);
+  } catch {
+    return null;
+  }
 }
-window.addEventListener('taximeter:zone-debug', (e) => showZoneDebug(e.detail));
-showZoneDebug(getZoneDebug());
+function saveDept(code) {
+  try {
+    localStorage.setItem(DEPT_KEY, code);
+  } catch {
+    /* navigation privée : non mémorisé */
+  }
+}
+
+// DEBUG TEMPORAIRE : affiche le centre des suggestions sous le prix
+function showCenterDebug(key, center) {
+  const out = document.getElementById('zone-debug');
+  if (out) out.textContent = `Suggestions ${key === 'origin' ? 'départ' : 'destination'} : ${center ? `autour du ${center.source}` : 'aucun centre'}`;
+}
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
@@ -313,10 +325,15 @@ function mountTrip(t) {
   }
   for (const key of ['origin', 'destination']) {
     const input = node.querySelector(`[data-f="${key}"]`);
-    // Zone du chauffeur demandée dès l'entrée dans le champ, pour être prête aux premières suggestions
-    input.addEventListener('focus', () => getZone());
     attachAutocomplete(input, {
-      fetch: suggest,
+      // Destination : autour du départ choisi ; sinon autour du département mémorisé
+      fetch: (q, signal) => {
+        const g = t.geo.origin;
+        const origin = key === 'destination' && g && g.query === t.origin.trim() ? g : null;
+        const center = suggestCenter({ origin, dept: savedDept() });
+        showCenterDebug(key, center);
+        return suggest(q, signal, center);
+      },
       onSelect: (place) => {
         input.value = place.label;
         t[key] = place.label;
@@ -783,6 +800,7 @@ function bind() {
       if (!found) return;
       t.rate = found[2];
       savePreferredRate(t.rate);
+      saveDept(found[0]);
     }
     else if (f === 'soloLong') t.soloLong = e.target.checked;
     else if (f === 'departNow') {

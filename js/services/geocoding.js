@@ -4,7 +4,6 @@
  * En cas d'échec (hors ligne, adresse étrangère…), on retombe sur la saisie libre.
  */
 import { prioritizeNearby } from '../core/nearby.js';
-import { getZone } from './zone.js';
 
 const ENDPOINT = 'https://data.geopf.fr/geocodage/search';
 
@@ -79,17 +78,16 @@ function poiToPlace(f) {
 /**
  * Suggestions pendant la frappe : adresses / rues / communes ET points d'intérêt
  * (deux requêtes en parallèle, fusionnées par pertinence).
- * Si la zone du chauffeur est connue (en France), elle est transmise à l'IGN (lat / lon) et
- * les lieux à moins de 70 km passent en tête de liste, les autres ensuite.
+ * Si un centre est donné (départ choisi ou département du chauffeur), il est transmis à l'IGN
+ * (lat / lon) et les lieux à moins de 70 km passent en tête de liste, les autres ensuite.
  */
-export async function suggest(text, signal) {
+export async function suggest(text, signal, center = null) {
   const q = String(text || '').trim();
   if (q.length < 3) return [];
-  const zone = await getZone();
-  const near = zone ? { lat: String(zone.lat), lon: String(zone.lon) } : {};
+  const near = center ? { lat: String(center.lat), lon: String(center.lon) } : {};
   const [addresses, pois] = await Promise.all([
-    query({ q, limit: zone ? '10' : '5', autocomplete: '1', ...near }, signal),
-    query({ q, limit: zone ? '8' : '4', index: 'poi', ...near }, signal),
+    query({ q, limit: center ? '10' : '5', autocomplete: '1', ...near }, signal),
+    query({ q, limit: center ? '8' : '4', index: 'poi', ...near }, signal),
   ]);
   const a = (addresses ?? []).map((f) => ({ ...toPlace(f), score: f.properties?.score ?? 0 }));
   const p = (pois ?? []).map(poiToPlace).filter((x) => x.score >= 0.3);
@@ -97,5 +95,5 @@ export async function suggest(text, signal) {
   const sorted = [...a, ...p]
     .filter((x) => x.label && !seen.has(x.label) && seen.add(x.label))
     .sort((x, y) => y.score - x.score);
-  return prioritizeNearby(sorted, zone).slice(0, 7);
+  return prioritizeNearby(sorted, center).slice(0, 7);
 }
