@@ -199,8 +199,8 @@ function tripTemplate(t) {
     <div class="trip-body">
       <div class="route-row">
         <div class="route">
-            <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ" aria-label="Départ (adresse ou ville)" enterkeyhint="next" /></div>
-            <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination (adresse ou ville)" enterkeyhint="next" /></div>
+            <div class="route-line from"><input type="text" data-f="origin" placeholder="Départ" aria-label="Départ (adresse ou ville)" enterkeyhint="next" /><button type="button" class="field-clear hidden" data-a="clear-place" data-key="origin" aria-label="Vider le départ" title="Vider le départ">×</button></div>
+            <div class="route-line to"><input type="text" data-f="destination" placeholder="Destination" aria-label="Destination (adresse ou ville)" enterkeyhint="next" /><button type="button" class="field-clear hidden" data-a="clear-place" data-key="destination" aria-label="Vider la destination" title="Vider la destination">×</button></div>
         </div>
         <button type="button" class="swap-btn" data-a="swap" data-o="swap" aria-label="Inverser départ et destination" title="Inverser départ et destination" disabled>${ICON_SWAP}</button>
       </div>
@@ -350,6 +350,7 @@ function updateTrip(t, index, count) {
 
 
   o('swap').disabled = !t.origin.trim() && !t.destination.trim();
+  for (const b of node.querySelectorAll('[data-a="clear-place"]')) b.classList.toggle('hidden', !t[b.dataset.key]);
   // Une heure dépassée (ou l'heure actuelle) repasse en « Maintenant »
   const departAt = futureOrNull(t.departAt);
   o('when').textContent = formatDeparture(departAt);
@@ -648,6 +649,18 @@ function removeTrip(t) {
   update();
 }
 
+/** Croix d'un champ départ / destination : vide le champ et remet le curseur dedans. */
+function clearPlace(t, key) {
+  t[key] = '';
+  t.geo[key] = null;
+  clearTimeout(geoTimers.get(`${t.id}-${key}`));
+  t.routeMsg = null;
+  t.routes = null;
+  const input = tripNode(t).querySelector(`[data-f="${key}"]`);
+  input.value = '';
+  input.focus();
+}
+
 /** Inverse départ et destination (texte et coordonnées déjà trouvées). */
 function swapPlaces(t) {
   [t.origin, t.destination] = [t.destination, t.origin];
@@ -760,6 +773,9 @@ function bind() {
         return;
       case 'choose':
         applyChoice(t, btn.dataset.choice);
+        break;
+      case 'clear-place':
+        clearPlace(t, btn.dataset.key);
         break;
       case 'swap':
         swapPlaces(t);
