@@ -1860,3 +1860,117 @@ input:focus {
     margin-left: 0;
   }
 }
+
+/* Titre + bascule « Itinéraire optimisé » */
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 12px;
+}
+.title-row .page-title {
+  margin: 0;
+  min-width: 0;
+}
+.mode-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: right;
+  cursor: pointer;
+}
+.mode-switch[aria-checked='true'] {
+  color: var(--text);
+}
+.switch-track {
+  position: relative;
+  width: 36px;
+  height: 21px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.15s;
+}
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+.mode-switch[aria-checked='true'] .switch-track {
+  background: var(--accent-strong);
+}
+.mode-switch[aria-checked='true'] .switch-thumb {
+  transform: translateX(15px);
+}
+.mode-switch:focus-visible .switch-track {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Mode optimisé : choix entre le plus court et le plus rapide */
+.route-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.route-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.route-choice.is-on {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--success);
+}
+.rc-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.route-choice.is-on .rc-title::before {
+  content: '✓ ';
+  color: var(--success);
+}
+.rc-main {
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rc-detail {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}

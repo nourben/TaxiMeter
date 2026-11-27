@@ -2,12 +2,17 @@
 // Usage HTML : <button class="info-btn" data-info="cle">i</button> + contenu dans INFO_CONTENT.
 
 import { TARIFS } from '../config/tarifs.js';
+import { OPTIMIZED_RULES as R } from '../core/route-choice.js';
 
 const n = (x) => String(x).replace('.', ',');
 const t = TARIFS;
 
 
 export const INFO_CONTENT = {
+  optimise: `
+    <p>Par défaut, la distance est celle de l’<strong>itinéraire le plus court</strong> : c’est la base de remboursement de l’Assurance maladie.</p>
+    <p>En mode <strong>itinéraire optimisé</strong>, si Google trouve un trajet <strong>plus rapide</strong> qui ajoute ${R.maxExtraKm} km au plus et fait gagner au moins ${R.minGainMin} min et ${Math.round(R.minGainRatio * 100)} % du temps, les deux sont proposés après le calcul : touchez celui à facturer.</p>
+    <p class="warn-text">Les km facturés au-delà du plus court peuvent être refusés au contrôle : à réserver aux cas justifiables (bouchons, travaux, déviation).</p>`,
   trajet: `
     <p>Une course peut compter jusqu’à 20 trajets : chacun a sa distance, ses options et son prix ; le module « Prix estimé » fait le total.</p>
     <p>Le bouton Google Maps ouvre l’itinéraire : relevez les km et saisissez-les. Plus tard, l’API remplira la distance et le temps de trajet ; la distance restera modifiable (↺ pour revenir à la valeur calculée).</p>

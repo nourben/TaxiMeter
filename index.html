@@ -16,7 +16,16 @@
     <header id="site-header"></header>
 
     <main>
-      <h1 class="page-title">Estimer une course</h1>
+      <div class="title-row switch-row">
+        <h1 class="page-title">Estimer une course</h1>
+        <div class="mode-opt">
+          <button type="button" class="mode-switch" id="optimized-toggle" role="switch" aria-checked="false">
+            <span class="mode-label">Itinéraire<br />optimisé</span>
+            <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+          </button>
+          <button class="info-btn" data-info="optimise" aria-label="Aide sur l’itinéraire optimisé">i</button>
+        </div>
+      </div>
 
       <form id="fare-form" novalidate autocomplete="off" onsubmit="return false">
         <section class="card" aria-labelledby="h-trips">

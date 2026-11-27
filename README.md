@@ -46,6 +46,14 @@ Exemples vérifiés par les tests (20 km à 1,20 €) : hospitalisation 37,00 �
 
 Le bouton « Calculer la distance » appelle la fonction Supabase `route` (Google Routes), qui retient toujours l'itinéraire le plus court en km : l'Assurance maladie rembourse sur la base du trajet le moins onéreux. Voir [docs/SUPABASE.md](docs/SUPABASE.md).
 
+Une heure de départ future (champ « Départ ») est transmise à Google pour une durée avec le trafic prévu ; sans heure, le calcul est fait pour un départ immédiat.
+
+Mode « Itinéraire optimisé » (bascule à côté du titre, désactivée à chaque ouverture) : si Google renvoie un itinéraire plus rapide qui ajoute 8 km au plus et fait gagner au moins 5 min et 15 % du temps, les deux sont proposés et l'utilisateur choisit (règle dans `js/core/route-choice.js`, testée).
+
+## Mise à jour automatique
+
+`js/ui/auto-update.js` compare, à l'ouverture, au retour dans l'app et toutes les 5 minutes, les fichiers chargés avec ceux en ligne. Si une nouvelle version est publiée, la page se recharge seule (utile quand le site est installé sur l'écran d'accueil d'un iPhone, sans bouton « Actualiser »). Une saisie en cours n'est jamais perdue : le rechargement attend que les champs soient vides, ou un retour dans l'app après plus de 30 minutes.
+
 ## Pages légales
 
 Quand le texte des CGU ou de la politique de confidentialité change (nouvelle donnée collectée, nouveau sous-traitant, nouvelle durée…), mettre à jour leur date « Dernière mise à jour ». Une modification du site qui ne change pas ce qui y est décrit ne demande pas de nouvelle date.

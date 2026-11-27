@@ -71,5 +71,8 @@ function renderFooter() {
 renderHeader();
 renderFooter();
 
+// Nouvelle version en ligne : rechargement automatique (utile en mode app sur l'écran d'accueil)
+import('./auto-update.js').then((m) => m.startAutoUpdate()).catch(() => {});
+
 // Mesure d'audience anonyme (chargée à part : une erreur ne doit pas casser la page)
 import('../services/visits.js').then((m) => m.trackPageView()).catch(() => {});

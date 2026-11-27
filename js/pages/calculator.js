@@ -8,6 +8,7 @@ import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimat
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
 import { attachWhenPicker, formatDeparture, futureOrNull } from '../ui/when-picker.js';
+import { shortestRoute, fasterAlternative } from '../core/route-choice.js';
 
 const RATE_KEY = 'taximeter.rate';
 /** Dernier tarif au km choisi, mémorisé dans le navigateur. */
@@ -65,6 +66,8 @@ function newTrip() {
     distance: '',
     apiDistance: null,
     apiDuration: null,
+    routes: null, // itinéraires renvoyés par le dernier calcul
+    routeChoice: 'shortest', // 'shortest' | 'faster' (mode optimisé)
     night: false,
     hospital: false,
     metropole: null,
@@ -81,7 +84,8 @@ function newTrip() {
   };
 }
 
-const state = { trips: [newTrip()], openFares: new Set() };
+/** optimized : mode « Itinéraire optimisé » (non mémorisé : on repart toujours du plus court). */
+const state = { trips: [newTrip()], openFares: new Set(), optimized: false };
 
 /* ---------- Calculs dérivés ---------- */
 
@@ -210,6 +214,7 @@ function tripTemplate(t) {
           </a>
       </div>
       <p class="route-msg hidden" data-o="route-msg" role="status"></p>
+      <div class="route-choices hidden" data-o="choices" role="radiogroup" aria-label="Itinéraire facturé"></div>
       <div class="opt-row opt-km">
       <div class="km-field opt-wide">
         <input type="number" data-f="distance" inputmode="decimal" min="0" step="0.1" placeholder="Distance" aria-label="Distance en km" />
@@ -344,13 +349,20 @@ function updateTrip(t, index, count) {
   o('calc-label').innerHTML = t.calculating
     ? 'Calcul en cours…<small>interrogation de Google</small>'
     : 'Calculer la distance<small>itinéraire le plus court</small>';
+  // Mode optimisé : le plus court et l'alternative plus rapide côte à côte, au choix
+  const choice = routeOptions(t);
+  const choices = o('choices');
+  choices.classList.toggle('hidden', !choice);
+  choices.innerHTML = choice ? choicesHtml(t, choice) : '';
+
   const msg = o('route-msg');
-  msg.classList.toggle('hidden', !t.routeMsg);
+  msg.classList.toggle('hidden', !t.routeMsg || !!choice);
   msg.classList.toggle('is-error', !!t.routeMsg?.error);
   const dur = !t.routeMsg?.error && Number.isFinite(t.routeMsg?.durationMin) ? formatDuration(t.routeMsg.durationMin) : '';
   const at = t.routeMsg?.departAt ? `<small>départ ${esc(formatDeparture(t.routeMsg.departAt).replace(/^Aujourd’hui à /, ''))}</small>` : '';
+  const noAlt = state.optimized && !t.routeMsg?.error && t.routes ? ' · pas d’itinéraire plus rapide intéressant' : '';
   msg.innerHTML = t.routeMsg
-    ? `<span>${esc(t.routeMsg.text)}</span>${dur ? `<span class="route-time" title="Temps de trajet estimé, trafic compris">⏱ ${dur}${at}</span>` : ''}`
+    ? `<span>${esc(t.routeMsg.text)}${noAlt}</span>${dur ? `<span class="route-time" title="Temps de trajet estimé, trafic compris">⏱ ${dur}${at}</span>` : ''}`
     : '';
 
   const maps = o('maps');
@@ -409,6 +421,59 @@ function updateTrip(t, index, count) {
   rateHint.innerHTML = nonDefault
     ? `<span class="warn-text">Tarif ${num(t.rate.toFixed(2))} €/km au lieu de ${num(BASE_RATE.toFixed(2))} €</span>`
     : '';
+}
+
+/** Mode optimisé : { shortest, faster } si une alternative plus rapide mérite d'être proposée, sinon null. */
+function routeOptions(t) {
+  if (!state.optimized || !t.routes || t.routeMsg?.error) return null;
+  const faster = fasterAlternative(t.routes);
+  return faster ? { shortest: shortestRoute(t.routes), faster } : null;
+}
+
+function fareFor(t, km) {
+  return fareOf({ ...t, distance: String(km) })?.fare.total ?? null;
+}
+
+function choicesHtml(t, { shortest, faster }) {
+  const extraKm = round2(faster.distanceKm - shortest.distanceKm);
+  const gain = shortest.durationMin - faster.durationMin;
+  const a = fareFor(t, shortest.distanceKm);
+  const b = fareFor(t, faster.distanceKm);
+  const euros = a != null && b != null ? ` · +${formatEuro(round2(b - a))}` : '';
+  const card = (key, title, r, detail) => {
+    const on = t.routeChoice === key;
+    return `<button type="button" class="route-choice${on ? ' is-on' : ''}" role="radio" aria-checked="${on}" data-a="choose" data-choice="${key}">
+      <span class="rc-title">${title}</span>
+      <span class="rc-main">${fmtKm(r.distanceKm)} · ${formatDuration(r.durationMin)}</span>
+      <span class="rc-detail">${detail}</span>
+    </button>`;
+  };
+  return (
+    card('shortest', 'Le plus court', shortest, 'distance de référence') +
+    card('faster', 'Plus rapide', faster, `+${num(extraKm)} km · −${formatDuration(gain)}${euros}`)
+  );
+}
+
+/** Applique l'itinéraire choisi (distance et durée) à un trajet. */
+function applyChoice(t, key) {
+  const opts = routeOptions(t);
+  const r = key === 'faster' && opts ? opts.faster : shortestRoute(t.routes);
+  if (!r) return;
+  t.routeChoice = key === 'faster' && opts ? 'faster' : 'shortest';
+  t.apiDistance = r.distanceKm;
+  t.apiDuration = r.durationMin;
+  t.distance = String(r.distanceKm);
+  t.copiedFromFirst = false;
+  tripNode(t).querySelector('[data-f="distance"]').value = t.distance;
+}
+
+/** Bascule du mode « Itinéraire optimisé » ; en le quittant, chaque trajet revient au plus court. */
+function setOptimized(on) {
+  state.optimized = on;
+  const btn = $('optimized-toggle');
+  btn?.setAttribute('aria-checked', String(on));
+  for (const t of state.trips) if (t.routeChoice === 'faster' && !on) applyChoice(t, 'shortest');
+  update();
 }
 
 /** Ce qui détermine un calcul : départ, destination et heure de départ (une heure passée vaut « maintenant »). */
@@ -570,6 +635,7 @@ function swapPlaces(t) {
     tripNode(t).querySelector(`[data-f="${key}"]`).value = t[key];
   }
   t.routeMsg = null;
+  t.routes = null;
 }
 
 function resetAll() {
@@ -599,6 +665,7 @@ function bind() {
     if (f !== 'distance') {
       scheduleGeocode(t, f);
       t.routeMsg = null;
+      t.routes = null;
     }
     update();
   });
@@ -662,6 +729,9 @@ function bind() {
       case 'calc':
         calculateDistance(t);
         return;
+      case 'choose':
+        applyChoice(t, btn.dataset.choice);
+        break;
       case 'swap':
         swapPlaces(t);
         break;
@@ -704,6 +774,8 @@ function bind() {
 
   el.reset.addEventListener('click', resetAll);
 
+  $('optimized-toggle')?.addEventListener('click', () => setOptimized(!state.optimized));
+
   // L'horaire automatique suit l'heure courante
   setInterval(update, 60_000);
 }
@@ -731,6 +803,8 @@ async function calculateDistance(t) {
     if (!state.trips.includes(t)) return;
     const index = state.trips.indexOf(t);
     t.calcKey = key;
+    t.routes = Array.isArray(r.routes) && r.routes.length ? r.routes : [{ distanceKm: r.distanceKm, durationMin: r.durationMin }];
+    t.routeChoice = 'shortest';
     t.routeMsg = {
       durationMin: r.durationMin,
       // Heure affichée seulement si le serveur l'a bien prise en compte
@@ -747,6 +821,7 @@ async function calculateDistance(t) {
       rate_limited: `${err.message} En attendant, relevez la distance sur Google Maps.`,
     }[err.code] ?? 'Calcul impossible pour le moment : relevez la distance sur Google Maps.';
     t.routeMsg = { text, error: true };
+    t.routes = null;
     t.calculating = false;
     update();
   }
