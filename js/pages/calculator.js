@@ -201,7 +201,7 @@ function tripTemplate(t) {
           </button>
           <a class="maps-btn" data-o="maps" target="_blank" rel="noopener">
             ${PIN}
-            <span class="maps-label"><span>Relever la distance<span class="wide-only"> en km</span></span><span><span class="narrow-only">en km </span>sur Google Maps</span></span>
+            <span class="maps-label"><span>Afficher le trajet</span><span>sur Google Maps</span></span>
           </a>
       </div>
       <p class="route-msg hidden" data-o="route-msg" role="status"></p>
@@ -330,9 +330,7 @@ function updateTrip(t, index, count) {
   calc.classList.toggle('is-done', done && !t.calculating);
   o('calc-label').innerHTML = t.calculating
     ? 'Calcul en cours…<small>interrogation de Google</small>'
-    : done
-      ? 'Distance calculée<small>modifiez le trajet pour recalculer</small>'
-      : 'Calculer la distance<small>itinéraire le plus court</small>';
+    : 'Calculer la distance<small>itinéraire le plus court</small>';
   const msg = o('route-msg');
   msg.classList.toggle('hidden', !t.routeMsg);
   msg.classList.toggle('is-error', !!t.routeMsg?.error);
@@ -711,10 +709,11 @@ async function calculateDistance(t) {
       durationMin: r.durationMin,
       // Heure affichée seulement si le serveur l'a bien prise en compte
       departAt: r.departureTime ? Date.parse(r.departureTime) : null,
-      text: `Distance calculée : ${fmtKm(r.distanceKm)} (itinéraire le plus court).`,
+      text: `Distance calculée : ${fmtKm(r.distanceKm)}`,
     };
     t.calculating = false;
     setRouteResult(index, { distanceKm: r.distanceKm, durationMin: r.durationMin });
+    revealPricing(t);
   } catch (err) {
     const text = {
       not_found: 'Départ ou destination non reconnu : vérifiez l’adresse ou relevez la distance sur Google Maps.',
@@ -725,6 +724,21 @@ async function calculateDistance(t) {
     t.calculating = false;
     update();
   }
+}
+
+/**
+ * Sur mobile, après un calcul : si le prix n'est pas entièrement visible, fait défiler la page
+ * pour amener le champ distance en haut de l'écran (tarification et prix visibles ensemble).
+ */
+function revealPricing(t) {
+  const mobile = window.matchMedia('(max-width: 600px), (pointer: coarse)').matches;
+  if (!mobile) return;
+  const price = document.getElementById('price-total');
+  if (price && price.getBoundingClientRect().bottom <= window.innerHeight) return;
+  const km = tripNode(t)?.querySelector('.opt-km');
+  if (!km) return;
+  const top = window.scrollY + km.getBoundingClientRect().top - 8;
+  if (top > window.scrollY) window.scrollTo({ top, behavior: 'smooth' });
 }
 
 /**
