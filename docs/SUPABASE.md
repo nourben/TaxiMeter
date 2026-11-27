@@ -84,3 +84,14 @@ Secret `IP_HASH_SALT` (Edge Functions → Secrets) : une longue valeur aléatoir
 ## Pas de cache des itinéraires (0008)
 
 Les conditions Google Maps Platform (EEE, section Routes API) n'autorisent à garder que les latitudes / longitudes (30 jours max), pas les distances ni les durées. Le cache a donc été retiré : `0007` l'avait rendu réglable, `0008` supprime la table `route_cache` et la purge associée. Chaque calcul de distance appelle Google ; les limites par appareil et le compteur mensuel protègent le quota.
+
+## Limite d'ajouts par minute pour les statistiques (0010)
+
+SQL Editor → coller `supabase/migrations/0010_insert_rate_limit.sql` → Run. Aucune fonction à redéployer.
+
+Effets :
+- `estimates`, `visits`, `audience_optouts` : au-delà de 30 ajouts par minute depuis une même adresse IP (5 pour les refus de mesure), ou de 600 par minute au total (60 pour les refus), la requête est refusée en entier — y compris un envoi de milliers de lignes d'un coup. Le site ignore ce refus sans rien afficher.
+- le site ne peut plus choisir la date d'une estimation (fixée par le serveur, comme pour les visites).
+- l'IP n'est jamais enregistrée : table `insert_rate` = empreinte HMAC-SHA256 du jour (secret `ip_salt` généré dans `private_settings`, illisible par le site), compteurs effacés après 1 heure.
+
+Pour changer une limite : modifier les nombres dans les trois `create trigger` en bas du script et le relancer.
