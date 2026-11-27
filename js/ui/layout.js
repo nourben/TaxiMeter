@@ -53,6 +53,29 @@ function renderHeader() {
   paint();
 }
 
+/** Lien « Partager le site » : menu de partage du téléphone, sinon copie du lien. */
+async function shareSite(e) {
+  e.preventDefault();
+  const link = e.currentTarget;
+  const url = new URL('./', location.href).href;
+  const data = { title: 'TaxiMeter', text: 'Estimer le prix d’une course de taxi conventionné', url };
+  if (navigator.share) {
+    try {
+      await navigator.share(data);
+    } catch {
+      /* partage annulé */
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    link.textContent = 'Lien copié ✓';
+  } catch {
+    link.textContent = url;
+  }
+  setTimeout(() => (link.textContent = 'Partager le site'), 2500);
+}
+
 function renderFooter() {
   const el = document.getElementById('site-footer');
   if (!el) return;
@@ -65,7 +88,8 @@ function renderFooter() {
           `<a href="${l.href}"${l.href === here ? ' aria-current="page"' : ''}${l.external ? ' target="_blank" rel="noopener"' : ''}>${l.label}</a>`,
       ).join('')}
     </nav>
-    <div>© ${new Date().getFullYear()} TaxiMeter</div>`;
+    <div class="footer-bottom"><span>© ${new Date().getFullYear()} TaxiMeter</span><a href="./" class="share-site" id="share-site">Partager le site</a></div>`;
+  el.querySelector('#share-site').addEventListener('click', shareSite);
 }
 
 renderHeader();

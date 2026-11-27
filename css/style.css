@@ -2263,3 +2263,18 @@ input:focus {
   font-size: 0.78rem;
   color: var(--text-muted);
 }
+
+/* Pied de page : « Partager le site » */
+.footer-bottom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.site-footer a.share-site {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
