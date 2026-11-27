@@ -104,3 +104,9 @@ test('abattement appliqué sur le total du trajet (majorations comprises)', () =
   assert.equal(Math.round(r.lines.reduce((s, l) => s + l.amount, 0) * 100) / 100, r.total);
   assert.equal(applyDiscount(base, 0.05, 'x', 'y').total, 49.4);
 });
+
+test('détail distance sous les km inclus : pas de soustraction négative', () => {
+  const line = computeFare({ distanceKm: 3.8, ratePerKm: 1.07 }).lines.find((l) => l.key === 'distance');
+  assert.equal(line.detail, '4 premiers km inclus');
+  assert.equal(line.amount, 0);
+});

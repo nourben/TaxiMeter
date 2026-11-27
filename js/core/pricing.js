@@ -28,7 +28,9 @@ export function computeFare({ distanceKm, ratePerKm, night = false, hospital = f
     {
       key: 'distance',
       label: 'Distance',
-      detail: `(${fmtKm(km)} − ${cfg.includedKm}) × ${fmtNum(ratePerKm)} €`,
+      detail: km <= cfg.includedKm
+        ? `${cfg.includedKm} premiers km inclus`
+        : `(${fmtKm(km)} − ${cfg.includedKm}) × ${fmtNum(ratePerKm)} €`,
       amount: distanceCost,
     },
   ];
