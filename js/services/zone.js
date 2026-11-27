@@ -1,5 +1,5 @@
 /**
- * Zone approximative du chauffeur, estimée d'après son adresse IP (service ipapi.co),
+ * Zone approximative du chauffeur, estimée d'après son adresse IP (service freeipapi.com),
  * pour mettre en avant les adresses proches dans les suggestions.
  * Une seule demande par visite : le résultat (latitude / longitude arrondies, pays) est gardé
  * le temps de la visite (sessionStorage). L'adresse IP n'est enregistrée nulle part par le site.
@@ -7,8 +7,8 @@
  */
 import { validZone } from '../core/nearby.js';
 
-const ENDPOINT = 'https://ipapi.co/json/';
-const KEY = 'taximeter.zone.v2';
+const ENDPOINT = 'https://free.freeipapi.com/api/json';
+const KEY = 'taximeter.zone.v3';
 const TIMEOUT_MS = 2500;
 
 let pending = null;
@@ -45,16 +45,15 @@ async function fetchZone() {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(ENDPOINT, { signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
-    if (!res.ok) { setDebug({ error: `HTTP ${res.status}` }); return null; }
+    if (!res.ok) { setDebug({ error: `HTTP ${res.status}` }); return undefined; }
     const d = await res.json();
-    if (d?.error) { setDebug({ error: d.reason || 'erreur ipapi' }); return null; }
-    setDebug({ city: d.city, postal: d.postal, region: d.region, country: d.country_code, lat: d.latitude, lon: d.longitude });
-    const zone = validZone({ lat: d.latitude, lon: d.longitude, country: d.country_code });
+    setDebug({ city: d.cityName, postal: d.zipCode, region: d.regionName, country: d.countryCode, lat: d.latitude, lon: d.longitude });
+    const zone = validZone({ lat: d.latitude, lon: d.longitude, country: d.countryCode });
     // Arrondi à ~1 km : seule une zone approximative est utile
     return zone && { lat: Math.round(zone.lat * 100) / 100, lon: Math.round(zone.lon * 100) / 100, country: zone.country };
   } catch (e) {
     setDebug({ error: e?.name === 'AbortError' ? 'délai dépassé' : 'requête bloquée' });
-    return null;
+    return undefined;
   } finally {
     clearTimeout(timer);
   }
@@ -65,6 +64,8 @@ export function getZone() {
   const cached = readCache();
   if (cached !== undefined) return Promise.resolve(validZone(cached));
   pending ??= fetchZone().then((zone) => {
+    // Service injoignable : rien en cache, on réessaiera à la prochaine saisie
+    if (zone === undefined) { pending = null; return null; }
     writeCache(zone);
     return zone;
   });

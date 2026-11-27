@@ -314,7 +314,7 @@ function mountTrip(t) {
   for (const key of ['origin', 'destination']) {
     const input = node.querySelector(`[data-f="${key}"]`);
     // Zone du chauffeur demandée dès l'entrée dans le champ, pour être prête aux premières suggestions
-    input.addEventListener('focus', () => getZone(), { once: true });
+    input.addEventListener('focus', () => getZone());
     attachAutocomplete(input, {
       fetch: suggest,
       onSelect: (place) => {
