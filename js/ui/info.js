@@ -34,13 +34,15 @@ export const INFO_CONTENT = {
   tarifkm: `
     <p>Le tarif au km dépend du <strong>département de la licence</strong> du taxi (convention Sécu 2025), facturé à partir du ${t.includedKm + 1}<sup>e</sup> km.</p>
     <div class="dept-finder">
-      <label class="dept-finder-label">Trouvez le tarif de votre département
-        <select data-f="dept">
+      <span class="dept-finder-label">Trouvez le tarif de votre département</span>
+      <div class="dept-pick">
+        <button type="button" class="dept-btn"><span data-o="dept-label">Choisir un département</span><span class="when-caret" aria-hidden="true">▾</span></button>
+        <select data-f="dept" class="dept-native" aria-label="Département de la licence">
           <option value="">Choisir un département</option>
           ${DEPARTMENT_RATES.map(([code, name]) => `<option value="${code}">${code} – ${name}</option>`).join('')}
         </select>
-      </label>
-      <strong class="dept-rate" data-o="dept-rate" aria-live="polite"></strong>
+      </div>
+      <p class="dept-rate hidden" data-o="dept-rate" aria-live="polite"></p>
     </div>`,
 };
 

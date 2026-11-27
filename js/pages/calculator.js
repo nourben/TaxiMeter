@@ -7,6 +7,7 @@ import { attachAutocomplete } from '../ui/autocomplete.js';
 import { scheduleEstimateLog, logDistanceCalculation } from '../services/estimates-log.js';
 import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
+import { attachDeptPicker } from '../ui/dept-picker.js';
 import { attachWhenPicker, formatDeparture, futureOrNull } from '../ui/when-picker.js';
 import { shortestRoute, fasterAlternative } from '../core/route-choice.js';
 import { nightRateFor } from '../core/period.js';
@@ -285,6 +286,7 @@ function mountTrip(t) {
   for (const f of ['origin', 'destination', 'distance']) node.querySelector(`[data-f="${f}"]`).value = t[f];
   el.trips.appendChild(node);
   initInfoButtons(node);
+  node.querySelectorAll('.dept-pick').forEach(attachDeptPicker);
   // État auto / manuel affiché en tête de l'info contextuelle de chaque option
   for (const [info, out] of [
     ['metropole', 'hint-metro'],
@@ -451,7 +453,13 @@ function updateTrip(t, index, count) {
   const deptOut = node.querySelector('[data-o="dept-rate"]');
   if (dept && deptOut) {
     const found = DEPARTMENT_RATES.find(([code]) => code === dept.value);
-    deptOut.textContent = found ? `${num(found[2].toFixed(2))} €/km${found[2] === t.rate ? ' ✓ appliqué' : ''}` : '';
+    const applied = found && found[2] === t.rate;
+    o('dept-label').textContent = found ? `${found[0]} – ${found[1]}` : 'Choisir un département';
+    deptOut.classList.toggle('hidden', !found);
+    deptOut.classList.toggle('is-applied', !!applied);
+    deptOut.innerHTML = !found ? '' : applied
+      ? `✓ Tarif appliqué à ce trajet : <strong>${num(found[2].toFixed(2))} €/km</strong>`
+      : `Tarif du département : <strong>${num(found[2].toFixed(2))} €/km</strong>`;
   }
 
   const rateHint = o('hint-rate');

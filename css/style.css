@@ -2065,29 +2065,124 @@ input:focus {
 .dept-finder {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 6px 12px;
-  margin-top: 8px;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
 }
 .dept-finder-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1 1 220px;
-  font-size: 0.85rem;
+  font-weight: 700;
 }
-.dept-finder select {
-  font: inherit;
-  font-size: 16px;
-  font-weight: 400;
-  padding: 8px 10px;
+.dept-pick {
+  position: relative;
+  flex: 1 1 220px;
+  max-width: 300px;
+}
+.dept-pick.is-open {
+  z-index: 6;
+}
+.dept-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 5px 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: var(--surface);
   color: var(--text);
-  max-width: 100%;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.dept-btn span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dept-pick.is-open .dept-btn,
+.dept-btn:hover {
+  border-color: var(--focus);
+}
+/* Téléphone : liste native (roue) invisible posée sur le bouton ; ordinateur : panneau avec recherche */
+.dept-native {
+  display: none;
+}
+@media (pointer: coarse) {
+  .dept-native {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    font-size: 16px;
+  }
+}
+.dept-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max(100%, 300px);
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow), 0 10px 30px rgba(20, 20, 30, 0.12);
+}
+.dept-search {
+  min-height: 36px !important;
+  padding: 6px 10px !important;
+  font-size: 0.9rem !important;
+}
+.dept-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.dept-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.dept-list li b {
+  display: inline-block;
+  min-width: 2.4em;
+}
+.dept-list li.is-active {
+  background: var(--surface-2);
+}
+.dept-list li.is-selected {
+  font-weight: 700;
+}
+.dept-li-rate {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.dept-list .dept-empty {
+  color: var(--text-muted);
+  cursor: default;
 }
 .dept-rate {
-  font-size: 0.95rem;
-  padding-bottom: 9px;
+  flex-basis: 100%;
+  margin: 2px 0 0 !important;
+  padding: 7px 10px;
+  text-align: center;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-left: 3px solid var(--border);
+  background: var(--surface);
+}
+.dept-rate.is-applied {
+  color: var(--success);
+  font-weight: 600;
+  border-left-color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
 }
