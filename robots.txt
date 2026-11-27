@@ -1,0 +1,5 @@
+# Tout le site peut être exploré ; la page Statistiques porte un noindex.
+User-agent: *
+Allow: /
+
+Sitemap: https://nourben.github.io/TaxiMeter/sitemap.xml

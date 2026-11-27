@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pages à proposer à Google. À mettre à jour (adresse) lors du passage au nom de domaine. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://nourben.github.io/TaxiMeter/</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://nourben.github.io/TaxiMeter/contact.html</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://nourben.github.io/TaxiMeter/mentions-legales.html</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://nourben.github.io/TaxiMeter/confidentialite.html</loc><lastmod>2026-11-27</lastmod></url>
+  <url><loc>https://nourben.github.io/TaxiMeter/cgu.html</loc><lastmod>2026-11-27</lastmod></url>
+</urlset>
