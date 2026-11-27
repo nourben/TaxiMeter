@@ -90,7 +90,7 @@ Les conditions Google Maps Platform (EEE, section Routes API) n'autorisent à ga
 SQL Editor → coller `supabase/migrations/0010_insert_rate_limit.sql` → Run. Aucune fonction à redéployer.
 
 Effets :
-- `estimates`, `visits`, `audience_optouts` : au-delà de 30 ajouts par minute depuis une même adresse IP (5 pour les refus de mesure), ou de 600 par minute au total (60 pour les refus), la requête est refusée en entier — y compris un envoi de milliers de lignes d'un coup. Le site ignore ce refus sans rien afficher.
+- `estimates`, `visits`, `audience_optouts` : au-delà de 60 ajouts par minute depuis une même adresse IP (10 pour les refus de mesure), ou de 5000 par minute au total (200 pour les refus), la requête est refusée en entier. Une vraie affluence (ex. 1000 visites en 5 min) reste loin en dessous ; et même au-delà, seules les statistiques manquent, le site marche normalement — y compris un envoi de milliers de lignes d'un coup. Le site ignore ce refus sans rien afficher.
 - le site ne peut plus choisir la date d'une estimation (fixée par le serveur, comme pour les visites).
 - l'IP n'est jamais enregistrée : table `insert_rate` = empreinte HMAC-SHA256 du jour (secret `ip_salt` généré dans `private_settings`, illisible par le site), compteurs effacés après 1 heure.
 

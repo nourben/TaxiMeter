@@ -119,18 +119,21 @@ $$;
 revoke all on function public.insert_rate_guard() from public, anon, authenticated;
 
 -- Limites : par IP et par minute / total par minute
---   visites : 30 / 600 · estimations et calculs : 30 / 600 · refus de mesure : 5 / 60
+--   visites : 60 / 5000 · estimations et calculs : 60 / 5000 · refus de mesure : 10 / 200
+--   Une forte affluence réelle (ex. 1000 visites en 5 min) reste très en dessous : la limite totale
+--   n'est qu'un garde-fou contre un envoi massif. Au-delà, seules les statistiques ne sont pas comptées ;
+--   le site, lui, fonctionne normalement.
 drop trigger if exists visits_rate_guard on public.visits;
 create trigger visits_rate_guard
   before insert on public.visits
-  for each row execute function public.insert_rate_guard(30, 600);
+  for each row execute function public.insert_rate_guard(60, 5000);
 
 drop trigger if exists estimates_rate_guard on public.estimates;
 create trigger estimates_rate_guard
   before insert on public.estimates
-  for each row execute function public.insert_rate_guard(30, 600);
+  for each row execute function public.insert_rate_guard(60, 5000);
 
 drop trigger if exists audience_optouts_rate_guard on public.audience_optouts;
 create trigger audience_optouts_rate_guard
   before insert on public.audience_optouts
-  for each row execute function public.insert_rate_guard(5, 60);
+  for each row execute function public.insert_rate_guard(10, 200);
