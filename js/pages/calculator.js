@@ -9,6 +9,7 @@ import { computeRoute } from '../services/route.js';
 import { initInfoButtons } from '../ui/info.js';
 import { attachWhenPicker, formatDeparture, futureOrNull } from '../ui/when-picker.js';
 import { shortestRoute, fasterAlternative } from '../core/route-choice.js';
+import { nightRateFor } from '../core/period.js';
 
 const RATE_KEY = 'taximeter.rate';
 /** Dernier tarif au km choisi, mémorisé dans le navigateur. */
@@ -68,7 +69,7 @@ function newTrip() {
     apiDuration: null,
     routes: null, // itinéraires renvoyés par le dernier calcul
     routeChoice: 'shortest', // 'shortest' | 'faster' (mode optimisé)
-    night: false,
+    night: null, // null : automatique selon l'heure de départ ; true / false : choisi à la main
     hospital: false,
     metropole: null,
     rate: preferredRate(),
@@ -96,8 +97,14 @@ function readKm(value) {
   return Number.isFinite(v) && v >= 0 ? v : null;
 }
 
+/** Majoration nuit / WE / férié déduite de l'heure de départ (heure choisie, sinon maintenant). */
+function autoNight(t) {
+  const at = futureOrNull(t.departAt) ?? Date.now();
+  return nightRateFor(new Date(at), TARIFS, t.apiDuration);
+}
+
 function effectiveNight(t) {
-  return t.night;
+  return t.night ?? autoNight(t).active;
 }
 
 function placeFor(t, key) {
@@ -236,6 +243,7 @@ function tripTemplate(t) {
         <div class="opt-row opt-night">
           <button type="button" class="chip opt-wide chip-icon" data-a="night" aria-pressed="false">${ICON_NIGHT}<span data-o="night-label">Nuit / WE / férié</span></button>
           <button class="info-btn" data-info="nuit" aria-label="Aide sur la majoration nuit, week-end et jours fériés">i</button>
+          <button type="button" class="link-btn auto-link hidden" data-a="night-auto" data-o="night-auto" title="Repasser en automatique selon l’heure de départ">↺ auto</button>
         </div>
         <div class="opt-row opt-metro">
           <button type="button" class="chip opt-wide" data-a="metro" aria-pressed="false">Métropole</button>
@@ -272,6 +280,7 @@ function mountTrip(t) {
   // État auto / manuel affiché en tête de l'info contextuelle de chaque option
   for (const [info, out] of [
     ['metropole', 'hint-metro'],
+    ['nuit', 'hint-night'],
   ]) {
     const panel = document.getElementById(node.querySelector(`[data-info="${info}"]`).getAttribute('aria-controls'));
     panel.insertAdjacentHTML('afterbegin', `<p class="info-status" data-o="${out}"></p>`);
@@ -296,6 +305,7 @@ function mountTrip(t) {
       set: (ms) => {
         t.departAt = ms;
         if (ms != null) t.lastDepartAt = ms;
+        t.night = null; // nouvelle heure : la majoration nuit repasse en automatique
         update();
       },
     }),
@@ -404,6 +414,12 @@ function updateTrip(t, index, count) {
   }
   o('hint-metro').innerHTML = metroText;
   o('metro-auto').classList.toggle('hidden', t.metropole == null);
+
+  const autoN = autoNight(t);
+  o('hint-night').textContent = t.night == null
+    ? `Automatique : ${autoN.active ? 'activée' : 'non activée'} (${autoN.reason})`
+    : `${t.night ? 'Activée' : 'Retirée'} à la main`;
+  o('night-auto').classList.toggle('hidden', t.night == null);
 
   const ctxShared = sharedContext();
   const soloRow = o('solo-row');
@@ -680,6 +696,7 @@ function bind() {
     }
     else if (f === 'soloLong') t.soloLong = e.target.checked;
     else if (f === 'departNow') {
+      t.night = null;
       if (e.target.checked) t.departAt = null;
       else if (futureOrNull(t.lastDepartAt) != null) t.departAt = t.lastDepartAt;
       else {
@@ -747,7 +764,10 @@ function bind() {
         t.copiedFromFirst = false;
         break;
       case 'night':
-        t.night = !t.night;
+        t.night = !effectiveNight(t);
+        break;
+      case 'night-auto':
+        t.night = null;
         break;
       case 'hospital':
         t.hospital = !t.hospital;
@@ -803,6 +823,7 @@ async function calculateDistance(t) {
     if (!state.trips.includes(t)) return;
     const index = state.trips.indexOf(t);
     t.calcKey = key;
+    t.night = null; // nouvelle recherche : la majoration nuit suit de nouveau l'heure de départ
     t.routes = Array.isArray(r.routes) && r.routes.length ? r.routes : [{ distanceKm: r.distanceKm, durationMin: r.durationMin }];
     t.routeChoice = 'shortest';
     t.routeMsg = {

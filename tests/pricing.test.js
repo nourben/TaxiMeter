@@ -74,6 +74,14 @@ test('nuit / week-end / férié selon la date', () => {
   assert.equal(nightRateFor(at(2026, 11, 11, 10, 0)).active, true); // 11 novembre
 });
 
+test('nuit : plus de la moitié du trajet entre 20 h et 8 h (durée connue)', () => {
+  const at = (y, m, d, h, min = 0) => new Date(y, m - 1, d, h, min);
+  assert.equal(nightRateFor(at(2026, 11, 25, 19, 40), undefined, 60).active, true); // milieu à 20:10
+  assert.equal(nightRateFor(at(2026, 11, 25, 19, 40), undefined, 30).active, false); // milieu à 19:55
+  assert.equal(nightRateFor(at(2026, 11, 26, 7, 40), undefined, 60).active, false); // milieu à 08:10
+  assert.equal(nightRateFor(at(2026, 11, 28, 11, 40), undefined, 60).active, false); // samedi : heure de prise en charge
+});
+
 test('jours fériés mobiles', () => {
   assert.equal(isPublicHoliday(new Date(2027, 2, 29)), true); // lundi de Pâques 2027
   assert.equal(isPublicHoliday(new Date(2027, 4, 6)), true); // Ascension 2027

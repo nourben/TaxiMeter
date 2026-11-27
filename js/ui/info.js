@@ -19,7 +19,7 @@ export const INFO_CONTENT = {
     <p>Les <strong>${t.includedKm} premiers km</strong> sont compris dans la prise en charge de ${n(t.pickup)} €.</p>`,
   nuit: `
     <p><strong>+ ${n(t.majorations.night.rate * 100)} %</strong> sur l’ensemble du montant : prise en charge, forfait grande ville et kilomètres, majoration hospitalisation comprise.</p>
-    <p>S’applique la nuit (${t.majorations.night.startHour} h – ${t.majorations.night.endHour} h), du samedi ${t.majorations.night.saturdayFromHour} h au dimanche soir et les jours fériés. À activer à la main selon l’heure de la course.</p>
+    <p>S’applique la nuit (${t.majorations.night.startHour} h – ${t.majorations.night.endHour} h), du samedi ${t.majorations.night.saturdayFromHour} h au dimanche soir et les jours fériés. Activée automatiquement d’après l’heure de départ choisie (l’heure actuelle pour « Maintenant ») et recalculée à chaque nouvelle recherche ; modifiable à la main.</p>
     <p>Cumulable avec la majoration hospitalisation.</p>`,
   hospital: `
     <p>Transport lié à une hospitalisation (entrée, sortie, hôpital de jour, chimiothérapie, radiothérapie, dialyse…) avec l’aller ou le retour à vide.</p>

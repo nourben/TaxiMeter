@@ -33,15 +33,20 @@ export function isPublicHoliday(date) {
 }
 
 /**
- * Majoration « nuit / week-end / férié » applicable à une date ?
+ * Majoration « nuit / week-end / férié » applicable à un départ (date = heure de prise en charge) ?
+ * Samedi après-midi, dimanche et fériés : selon l'heure de prise en charge.
  * @returns {{ active:boolean, reason:string }}
  */
-export function nightRateFor(date, cfg = TARIFS) {
+export function nightRateFor(date, cfg = TARIFS, durationMin = null) {
   const N = cfg.majorations.night;
-  const h = date.getHours();
+  // Nuit : majoration entière si plus de la moitié du temps en charge est entre 20 h et 8 h,
+  // donc on regarde l'heure au milieu du trajet quand la durée est connue.
+  const mid = durationMin > 0 ? new Date(date.getTime() + (durationMin * 60_000) / 2) : date;
+  const h = mid.getHours();
+  const startH = date.getHours();
   if (isPublicHoliday(date)) return { active: true, reason: 'jour férié' };
   if (date.getDay() === 0) return { active: true, reason: 'dimanche' };
-  if (date.getDay() === 6 && h >= N.saturdayFromHour) return { active: true, reason: 'samedi après-midi' };
+  if (date.getDay() === 6 && startH >= N.saturdayFromHour) return { active: true, reason: 'samedi après-midi' };
   if (h >= N.startHour || h < N.endHour) return { active: true, reason: `nuit (${N.startHour} h – ${N.endHour} h)` };
   return { active: false, reason: `jour de semaine (${N.endHour} h – ${N.startHour} h)` };
 }
