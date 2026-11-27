@@ -2024,3 +2024,75 @@ input:focus {
 .field-clear.hidden {
   display: none;
 }
+
+/* Tarif au km : 4e segment « Autres » (liste de tous les tarifs) */
+.segmented .seg-other {
+  flex: 1;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.segmented .seg-other select {
+  /* Liste native invisible posée sur le libellé : 16 px pour éviter le zoom iOS */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 16px;
+  cursor: pointer;
+}
+.segmented .seg-other.is-on {
+  background: var(--seg-active);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.segmented .seg-other.nondefault {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.segmented .seg-other:focus-within {
+  outline: 2px solid var(--focus);
+}
+.opt-rate .segmented.seg-sm label {
+  padding-left: 4px;
+  padding-right: 4px;
+  white-space: nowrap;
+}
+
+/* Recherche du tarif par département (info « i » des tarifs) */
+.dept-finder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+.dept-finder-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 220px;
+  font-size: 0.85rem;
+}
+.dept-finder select {
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  max-width: 100%;
+}
+.dept-rate {
+  font-size: 0.95rem;
+  padding-bottom: 9px;
+}

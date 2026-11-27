@@ -1,4 +1,4 @@
-import { TARIFS, MAX_TRIPS, SHARED_TRANSPORT } from '../config/tarifs.js';
+import { TARIFS, MAX_TRIPS, SHARED_TRANSPORT, ALL_RATES, DEPARTMENT_RATES } from '../config/tarifs.js';
 import { computeFare, formatEuro, round2, sharedRate, applyDiscount } from '../core/pricing.js';
 import { checkMetropole } from '../core/metropole.js';
 import { googleMapsDirectionsUrl } from '../services/maps-link.js';
@@ -16,7 +16,7 @@ const RATE_KEY = 'taximeter.rate';
 function preferredRate() {
   try {
     const r = Number(localStorage.getItem(RATE_KEY));
-    if (TARIFS.ratesPerKm.includes(r)) return r;
+    if (ALL_RATES.includes(r)) return r;
   } catch {
     /* stockage indisponible */
   }
@@ -187,6 +187,8 @@ function tripTemplate(t) {
       return `<input type="radio" name="rate-${t.id}" id="${id}" value="${r}" data-f="rate"${nd} /><label for="${id}">${num(r.toFixed(2))} €</label>`;
     })
     .join('');
+  const others = ALL_RATES.map((r) => `<option value="${r}">${num(r.toFixed(2))} €</option>`).join('');
+  const otherRate = `<span class="seg-other" data-o="rate-other-wrap"><span class="seg-other-label" data-o="rate-other-label" aria-hidden="true">Autres ▾</span><select data-f="rate-other" aria-label="Autres tarifs au km"><option value="" disabled>Autres tarifs</option>${others}</select></span>`;
   return `
     <div class="trip-head">
       <span class="trip-title" data-o="title"></span>
@@ -256,7 +258,7 @@ function tripTemplate(t) {
           <button type="button" class="link-btn auto-link hidden" data-a="metro-auto" data-o="metro-auto" title="Repasser en automatique">↺ auto</button>
         </div>
         <div class="opt-row opt-rate">
-          <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Tarif kilométrique">${rates}</div>
+          <div class="segmented seg-sm opt-wide" role="radiogroup" aria-label="Tarif kilométrique">${rates}${otherRate}</div>
           <button class="info-btn" data-info="tarifkm" aria-label="Aide sur le tarif kilométrique">i</button>
           <p class="trip-hint opt-side hidden" data-o="hint-rate"></p>
         </div>
@@ -437,6 +439,20 @@ function updateTrip(t, index, count) {
   soloInput.disabled = !longEnough;
   soloRow.querySelector('.solo-chip').classList.toggle('is-disabled', !longEnough);
   soloRow.querySelector('.solo-chip').classList.toggle('is-on', t.soloLong && longEnough);
+
+  // Tarif hors boutons rapides : affiché dans « Autres »
+  const quick = TARIFS.ratesPerKm.includes(t.rate);
+  const otherSel = node.querySelector('[data-f="rate-other"]');
+  otherSel.value = quick ? '' : String(t.rate);
+  o('rate-other-label').textContent = quick ? 'Autres ▾' : `${num(t.rate.toFixed(2))} € ▾`;
+  o('rate-other-wrap').classList.toggle('is-on', !quick);
+  o('rate-other-wrap').classList.toggle('nondefault', !quick && t.rate !== BASE_RATE);
+  const dept = node.querySelector('[data-f="dept"]');
+  const deptOut = node.querySelector('[data-o="dept-rate"]');
+  if (dept && deptOut) {
+    const found = DEPARTMENT_RATES.find(([code]) => code === dept.value);
+    deptOut.textContent = found ? `${num(found[2].toFixed(2))} €/km${found[2] === t.rate ? ' ✓ appliqué' : ''}` : '';
+  }
 
   const rateHint = o('hint-rate');
   const nonDefault = t.rate !== BASE_RATE;
@@ -715,8 +731,15 @@ function bind() {
     const t = tripFromEvent(e);
     const f = e.target.dataset.f;
     if (!t) return;
-    if (f === 'rate') {
+    if (f === 'rate' || (f === 'rate-other' && e.target.value)) {
       t.rate = Number(e.target.value);
+      savePreferredRate(t.rate);
+    }
+    else if (f === 'dept') {
+      // Recherche par département : le tarif trouvé s'applique à ce trajet
+      const found = DEPARTMENT_RATES.find(([code]) => code === e.target.value);
+      if (!found) return;
+      t.rate = found[2];
       savePreferredRate(t.rate);
     }
     else if (f === 'soloLong') t.soloLong = e.target.checked;

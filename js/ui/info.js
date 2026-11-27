@@ -1,7 +1,7 @@
 // Infos contextuelles : bouton « i » qui déplie un panneau explicatif.
 // Usage HTML : <button class="info-btn" data-info="cle">i</button> + contenu dans INFO_CONTENT.
 
-import { TARIFS } from '../config/tarifs.js';
+import { TARIFS, DEPARTMENT_RATES } from '../config/tarifs.js';
 import { OPTIMIZED_RULES as R } from '../core/route-choice.js';
 
 const n = (x) => String(x).replace('.', ',');
@@ -33,8 +33,15 @@ export const INFO_CONTENT = {
     <p>Source : convention-cadre nationale des taxis conventionnés (JO du 8 août 2025).</p>`,
   tarifkm: `
     <p>Le tarif au km dépend du <strong>département de la licence</strong> du taxi (convention Sécu 2025), facturé à partir du ${t.includedKm + 1}<sup>e</sup> km.</p>
-    <p><strong>1,07 €</strong> : 77, 78, 91, 92, 93, 94, 95 et de nombreux départements (Rhône, Gironde, Bas-Rhin…) · <strong>1,20 €</strong> : Aisne, Nord, Oise, Pas-de-Calais, Vaucluse · <strong>1,22 €</strong> : Paris, Isère, Haute-Savoie.</p>
-    <p>Ailleurs, le tarif va de 1,08 € à 1,27 € selon le département : il n’est pas encore proposé ici.</p>`,
+    <div class="dept-finder">
+      <label class="dept-finder-label">Trouvez le tarif de votre département
+        <select data-f="dept">
+          <option value="">Choisir un département</option>
+          ${DEPARTMENT_RATES.map(([code, name]) => `<option value="${code}">${code} – ${name}</option>`).join('')}
+        </select>
+      </label>
+      <strong class="dept-rate" data-o="dept-rate" aria-live="polite"></strong>
+    </div>`,
 };
 
 let counter = 0;
